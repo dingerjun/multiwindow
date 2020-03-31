@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/recent_portrait_usrguide_bg_2" >
+
+    <RelativeLayout
+        android:id="@+id/all"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+	<TextView
+		android:id="@+id/guide_prompt_sub_3"
+		android:layout_width="wrap_content"
+		android:layout_height="match_parent"
+		android:layout_alignParentRight="true"
+		android:layout_marginTop="350dp"
+		android:layout_marginRight="5dp"
+		android:text="@string/guide_prompt_info3"
+		android:textSize="30dp"
+		android:textColor="#FFFFFF"/>
+        <Button
+            android:id="@+id/recent_start_bt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:textSize="30dp"
+            android:text="@string/guide_close" />
+    </RelativeLayout>
+</LinearLayout>

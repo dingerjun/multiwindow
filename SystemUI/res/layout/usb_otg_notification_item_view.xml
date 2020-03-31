@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent">
+
+	<ImageView android:id="@+id/noti_icon" 
+	    	android:layout_width="wrap_content"
+		android:layout_height="wrap_content" 
+		android:layout_marginTop="3dp"
+		android:background="@drawable/noti_icon_bg"
+		android:src="@drawable/noti_icon_src" 
+		android:scaleType="centerInside" />
+
+    	<TextView android:id="@+id/txt_ms" 
+	    	android:layout_width="wrap_content"
+		android:layout_height="wrap_content" 
+		android:layout_toRightOf="@id/noti_icon"
+		android:layout_marginLeft="10dp" 
+		android:layout_marginTop="2dp"
+		android:textColor="@color/white" 
+		android:textSize="@dimen/status_bar_recents_app_label_text_size" />
+	
+	<ProgressBar android:id="@+id/prog_tzl"
+		android:layout_toRightOf="@id/noti_icon" 
+		android:layout_marginLeft="10dp"
+		android:layout_marginTop="5dp"
+		android:layout_below="@id/txt_ms"
+		android:progressDrawable="@drawable/progress_bar_notifi"
+		android:layout_width="330dp" 
+		android:layout_height="23dp"
+		style="?android:attr/progressBarStyleHorizontal"
+		android:indeterminateOnly="false" 
+		android:progress="60" 
+		android:max="100">
+	</ProgressBar>
+	
+        <!--
+	<TextView android:id="@+id/prog_tzl"
+		android:layout_toRightOf="@id/noti_icon" 
+		android:layout_marginLeft="10dp"
+		android:layout_marginTop="5dp"
+		android:text="@string/open_usb_otg_only_u_disk"
+		android:layout_below="@id/txt_ms"
+		android:layout_width="230dp" 
+		android:layout_height="wrap_content"
+		android:textColor="#808080" 
+		android:textSize="13sp" />
+	-->
+	<TextView android:id="@+id/txt_bfb" 
+	        android:layout_width="330dp"
+		android:layout_height="wrap_content" 
+		android:layout_toRightOf="@id/noti_icon" 
+		android:layout_marginLeft="10dp" 
+		android:layout_marginTop="5dp"
+		android:layout_below="@id/txt_ms"
+        android:gravity="center"
+		android:textColor="@color/black" 
+		android:textSize="@dimen/status_bar_recents_app_description_text_size" />
+
+</RelativeLayout>

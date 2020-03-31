@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/usb_debug_msg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="?android:attr/textAppearanceMedium"
+        android:paddingStart="16dip"
+        android:paddingEnd="16dip"
+        android:paddingTop="8dip"
+        android:paddingBottom="8dip"
+    />
+
+    <include layout="@*android:layout/always_use_checkbox"
+        android:layout_marginBottom="8dip"
+    />
+
+</LinearLayout>

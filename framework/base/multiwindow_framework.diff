@@ -1,0 +1,2663 @@
+commit af41e46ff2f3ef7cf621250fd8f36a7a0ac3c43e
+Author: liming11 <liming11@lenovo.com>
+Date:   Tue Apr 22 14:27:52 2014 +0800
+
+    [BLADE10_FHD_KK][BLADEFHDKK-35][liming11]:the change of framework for the new feature of multi-window
+    
+    Change-Id: I016a64c9778d8762eedb780e433bcc0e693cb207
+
+diff --git a/core/java/android/app/ActivityManager.java b/core/java/android/app/ActivityManager.java
+index 7ca3459..1e6cce4 100644
+--- a/core/java/android/app/ActivityManager.java
++++ b/core/java/android/app/ActivityManager.java
+@@ -1314,10 +1314,10 @@ public class ActivityManager {
+             bounds.writeToParcel(dest, flags);
+             dest.writeInt(stackId);
+             if (children != null) {
+-                children[0].writeToParcel(dest, flags);
+-                children[1].writeToParcel(dest, flags);
++                if (children[0]!=null) children[0].writeToParcel(dest, flags);
++                if (children[1]!=null) children[1].writeToParcel(dest, flags);
+             } else {
+-                stack.writeToParcel(dest, flags);
++                if (stack!=null) stack.writeToParcel(dest, flags);
+             }
+         }
+ 
+diff --git a/core/java/android/app/ActivityManagerNative.java b/core/java/android/app/ActivityManagerNative.java
+index b925c29..2f6f07a 100644
+--- a/core/java/android/app/ActivityManagerNative.java
++++ b/core/java/android/app/ActivityManagerNative.java
+@@ -675,6 +675,36 @@ public abstract class ActivityManagerNative extends Binder implements IActivityM
+             return true;
+         }
+ 
++        case SET_FOCUSED_STACK_TRANSACTION2: {
++            data.enforceInterface(IActivityManager.descriptor);
++            int stackId = data.readInt();
++            setFocusedStack2(stackId);
++            reply.writeNoException();
++            return true;
++        }
++        case REMOVE_EMPTY_STACKS_TRANSACTION2: {
++            data.enforceInterface(IActivityManager.descriptor);
++            int stackId = data.readInt();
++            removeEmptyStack2(stackId);
++            reply.writeNoException();
++            return true;
++        }
++        case SET_LOCK_FOCUS_SWITCH_TRANSACTION2: {
++            data.enforceInterface(IActivityManager.descriptor);
++            boolean status = data.readInt() != 0;
++            setLockFocusSwitch(status);
++            reply.writeNoException();
++            return true;
++        }
++
++        case GET_FOCUSED_STACK_TRANSACTION2: {
++            data.enforceInterface(IActivityManager.descriptor);
++            int res = getFocusedStack2();
++            reply.writeNoException();
++            reply.writeInt(res);
++            return true;
++        }
++
+         case GET_TASK_FOR_ACTIVITY_TRANSACTION: {
+             data.enforceInterface(IActivityManager.descriptor);
+             IBinder token = data.readStrongBinder();
+@@ -2045,6 +2075,36 @@ public abstract class ActivityManagerNative extends Binder implements IActivityM
+             reply.writeNoException();
+             return true;
+         }
++
++        case SHOW_MULTI_WINDOW_IF_NEED:
++        {
++            data.enforceInterface(IActivityManager.descriptor);
++            boolean res = showMultiWindow();
++            reply.writeNoException();
++            reply.writeInt(res ? 1 : 0);
++            return true;
++        }
++
++        case REMOVE_STACK:
++        {
++            data.enforceInterface(IActivityManager.descriptor);
++            int stackId = data.readInt();
++            boolean removeTask = data.readInt() != 0;
++            removeStack(stackId, removeTask);
++            reply.writeNoException();
++            return true;
++        }
++
++        case SET_FOCUSED_TASK:
++        {
++            data.enforceInterface(IActivityManager.descriptor);
++            int taskId = data.readInt();
++            boolean result = setFocusedTask(taskId);
++            reply.writeNoException();
++            reply.writeInt(result ? 1 : 0);
++            return true;
++        }
++
+         }
+ 
+         return super.onTransact(code, data, reply, flags);
+@@ -2828,6 +2888,51 @@ class ActivityManagerProxy implements IActivityManager
+         data.recycle();
+         reply.recycle();
+     }
++    public void setFocusedStack2(int stackId) throws RemoteException
++    {
++        Parcel data = Parcel.obtain();
++        Parcel reply = Parcel.obtain();
++        data.writeInterfaceToken(IActivityManager.descriptor);
++        data.writeInt(stackId);
++        mRemote.transact(SET_FOCUSED_STACK_TRANSACTION2, data, reply, IBinder.FLAG_ONEWAY);
++        reply.readException();
++        data.recycle();
++        reply.recycle();
++    }
++    public void removeEmptyStack2(int stackId) throws RemoteException
++    {
++        Parcel data = Parcel.obtain();
++        Parcel reply = Parcel.obtain();
++        data.writeInterfaceToken(IActivityManager.descriptor);
++        data.writeInt(stackId);
++        mRemote.transact(REMOVE_EMPTY_STACKS_TRANSACTION2, data, reply, IBinder.FLAG_ONEWAY);
++        reply.readException();
++        data.recycle();
++        reply.recycle();
++    }
++    public int getFocusedStack2() throws RemoteException
++    {
++        Parcel data = Parcel.obtain();
++        Parcel reply = Parcel.obtain();
++        data.writeInterfaceToken(IActivityManager.descriptor);
++        mRemote.transact(GET_FOCUSED_STACK_TRANSACTION2, data, reply, 0);
++        reply.readException();
++        int res = reply.readInt();
++        data.recycle();
++        reply.recycle();
++        return res;
++    }
++    public void setLockFocusSwitch(boolean bLock) throws RemoteException
++    {
++        Parcel data = Parcel.obtain();
++        Parcel reply = Parcel.obtain();
++        data.writeInterfaceToken(IActivityManager.descriptor);
++        data.writeInt(bLock ? 1 : 0);
++        mRemote.transact(SET_LOCK_FOCUS_SWITCH_TRANSACTION2, data, reply, IBinder.FLAG_ONEWAY);
++        reply.readException();
++        data.recycle();
++        reply.recycle();
++    }
+     public int getTaskForActivity(IBinder token, boolean onlyRoot) throws RemoteException
+     {
+         Parcel data = Parcel.obtain();
+@@ -4685,6 +4790,7 @@ class ActivityManagerProxy implements IActivityManager
+         data.recycle();
+         reply.recycle();
+     }
++    /* end zhangsx10 framework support for ideafriend */
+ 
+     /* begin zhangsx10 framework support for ideafriend */
+     public void setPersistentForce(String pkgName,boolean set) throws RemoteException{
+@@ -4700,5 +4806,44 @@ class ActivityManagerProxy implements IActivityManager
+         }
+     }
+     /* end zhangsx10 framework support for ideafriend */
++
++    @Override
++    public boolean showMultiWindow() throws RemoteException {
++        Parcel data = Parcel.obtain();
++        Parcel reply = Parcel.obtain();
++        data.writeInterfaceToken(IActivityManager.descriptor);
++        mRemote.transact(SHOW_MULTI_WINDOW_IF_NEED, data, reply, 0);
++        reply.readException();
++        boolean res = reply.readInt() != 0;
++        data.recycle();
++        reply.recycle();
++        return res;
++    }
++
++    public void removeStack(int stackId, boolean removeTask) throws RemoteException {
++        Parcel data = Parcel.obtain();
++        Parcel reply = Parcel.obtain();
++        data.writeInterfaceToken(IActivityManager.descriptor);
++        data.writeInt(stackId);
++        data.writeInt(removeTask ? 1 : 0);
++        mRemote.transact(REMOVE_STACK, data, reply, 0);
++        reply.readException();
++        data.recycle();
++        reply.recycle();
++    }
++
++    public boolean setFocusedTask(int taskId) throws RemoteException {
++        Parcel data = Parcel.obtain();
++        Parcel reply = Parcel.obtain();
++        data.writeInterfaceToken(IActivityManager.descriptor);
++        data.writeInt(taskId);
++        mRemote.transact(SET_FOCUSED_TASK, data, reply, 0);
++        reply.readException();
++        boolean result = reply.readInt() != 0;
++        data.recycle();
++        reply.recycle();
++        return result;
++    }
++
+     private IBinder mRemote;
+ }
+diff --git a/core/java/android/app/IActivityManager.java b/core/java/android/app/IActivityManager.java
+index fcd6c78..f0cc478 100644
+--- a/core/java/android/app/IActivityManager.java
++++ b/core/java/android/app/IActivityManager.java
+@@ -124,6 +124,10 @@ public interface IActivityManager extends IInterface {
+     public List<StackBoxInfo> getStackBoxes() throws RemoteException;
+     public StackBoxInfo getStackBoxInfo(int stackBoxId) throws RemoteException;
+     public void setFocusedStack(int stackId) throws RemoteException;
++    public void setFocusedStack2(int stackId) throws RemoteException;
++    public void removeEmptyStack2(int stackId) throws RemoteException;
++    public int getFocusedStack2() throws RemoteException;
++    public void setLockFocusSwitch(boolean bLock) throws RemoteException;
+     public int getTaskForActivity(IBinder token, boolean onlyRoot) throws RemoteException;
+     /* oneway */
+     public void reportThumbnail(IBinder token,
+@@ -412,6 +416,12 @@ public interface IActivityManager extends IInterface {
+     public void setPersistentForce(String pkgName,boolean set) throws RemoteException;
+     /* end zhangsx10 framework support for ideafriend */
+ 
++    public boolean showMultiWindow() throws RemoteException;
++
++    public void removeStack(int stackId, boolean removeTask) throws RemoteException;
++
++    public boolean setFocusedTask(int taskId) throws RemoteException;
++
+     /*
+      * Private non-Binder interfaces
+      */
+@@ -698,7 +708,14 @@ public interface IActivityManager extends IInterface {
+     int RELEASE_PERSISTABLE_URI_PERMISSION_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+180;
+     int GET_PERSISTED_URI_PERMISSIONS_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+181;
+     int APP_NOT_RESPONDING_VIA_PROVIDER_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+182;
++    int SET_FOCUSED_STACK_TRANSACTION2 = IBinder.FIRST_CALL_TRANSACTION+183;
++    int GET_FOCUSED_STACK_TRANSACTION2 = IBinder.FIRST_CALL_TRANSACTION+184;
++    int SHOW_MULTI_WINDOW_IF_NEED = IBinder.FIRST_CALL_TRANSACTION+185;
++    int SET_LOCK_FOCUS_SWITCH_TRANSACTION2 = IBinder.FIRST_CALL_TRANSACTION+186;
++    int REMOVE_EMPTY_STACKS_TRANSACTION2 = IBinder.FIRST_CALL_TRANSACTION+187;
++    int REMOVE_STACK = IBinder.FIRST_CALL_TRANSACTION+188;
++    int SET_FOCUSED_TASK = IBinder.FIRST_CALL_TRANSACTION+189;
+     /* begin zhangsx10 framework support for ideafriend */
+-    int SET_PERSISTENT_FORCE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+183;
++    int SET_PERSISTENT_FORCE_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+190;
+     /* end zhangsx10 framework support for ideafriend */
+ }
+diff --git a/core/java/android/content/ContentQueryMap.java b/core/java/android/content/ContentQueryMap.java
+index 8aeaa8f..34aec1c 100644
+--- a/core/java/android/content/ContentQueryMap.java
++++ b/core/java/android/content/ContentQueryMap.java
+@@ -170,7 +170,7 @@ public class ContentQueryMap extends Observable {
+             mCursor.unregisterContentObserver(mContentObserver);
+             mContentObserver = null;
+         }
+-        mCursor.close();
++        if (mCursor != null) mCursor.close();
+         mCursor = null;
+     }
+ 
+diff --git a/core/java/android/content/Intent.java b/core/java/android/content/Intent.java
+index de52eaa..7d68443 100644
+--- a/core/java/android/content/Intent.java
++++ b/core/java/android/content/Intent.java
+@@ -3493,6 +3493,7 @@ public class Intent implements Parcelable, Cloneable {
+      */
+     public static final int FLAG_INCLUDE_STOPPED_PACKAGES = 0x00000020;
+ 
++    public static final int FLAG_ACTIVITY_MULTIWINDOW= 0x80000000;
+     /**
+      * When combined with {@link #FLAG_GRANT_READ_URI_PERMISSION} and/or
+      * {@link #FLAG_GRANT_WRITE_URI_PERMISSION}, the URI permission grant can be
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 4586d1f..ab13568 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -4915,6 +4915,10 @@ public final class Settings {
+         */
+        public static final String DATA_ROAMING = "data_roaming";
+ 
++       /*Begin,Lenovo-sw Tom_liming11 add 2014-03-13, add for MultiWindow usrguide*/
++       public static final String SYSTEM_UI_USRGUIDE = "system_ui_guide";
++       /*End,Lenovo-sw Tom_liming11 add 2014-03-13, add for MultiWindow usrguide*/
++
+        /**
+         * The value passed to a Mobile DataConnection via bringUp which defines the
+         * number of retries to preform when setting up the initial connection. The default
+diff --git a/core/java/android/view/WindowManagerPolicy.java b/core/java/android/view/WindowManagerPolicy.java
+index c5a1b86..f97e454 100644
+--- a/core/java/android/view/WindowManagerPolicy.java
++++ b/core/java/android/view/WindowManagerPolicy.java
+@@ -1193,4 +1193,13 @@ public interface WindowManagerPolicy {
+      * @param enabled Whether touch exploration is enabled.
+      */
+     public void setTouchExplorationEnabled(boolean enabled);
++
++    /**
++     * Set split bar on/off
++     * @param enable whether splitbar show be displayed or not
++     */
++    /*Lenovo sw, xieqiong2 modify 2014.2.18 for BLADEFHD-2291 */
++    public void showSplitterWindow(boolean enable, boolean change);
++
++    public void showSplitterWindow(boolean enable, int userId);
+ }
+diff --git a/core/java/android/view/inputmethod/InputMethodManager.java b/core/java/android/view/inputmethod/InputMethodManager.java
+index 4168b4e..05a4707 100644
+--- a/core/java/android/view/inputmethod/InputMethodManager.java
++++ b/core/java/android/view/inputmethod/InputMethodManager.java
+@@ -1197,6 +1197,9 @@ public final class InputMethodManager {
+                             return true;
+                         }
+                     }
++                } else {
++                    if (DEBUG) Log.d(TAG, "Fail to get input bind result, set mHasBeenInactive to true");
++                    mHasBeenInactive = true;
+                 }
+                 if (mCurMethod != null && mCompletions != null) {
+                     try {
+diff --git a/core/java/android/widget/AbsListView.java b/core/java/android/widget/AbsListView.java
+index 30724ab..704c706 100644
+--- a/core/java/android/widget/AbsListView.java
++++ b/core/java/android/widget/AbsListView.java
+@@ -3022,7 +3022,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
+         }
+ 
+         public boolean sameWindow() {
+-            return getWindowAttachCount() == mOriginalAttachCount;
++//dingej1 2014,1,27 begin. BLADEFHD-1640. Do not start activity when lost focus.
++            return hasWindowFocus() && getWindowAttachCount() == mOriginalAttachCount;
++//dingej1 end.
+         }
+     }
+ 
+diff --git a/core/java/android/widget/PopupWindow.java b/core/java/android/widget/PopupWindow.java
+index 1b030f1..0d53f74 100644
+--- a/core/java/android/widget/PopupWindow.java
++++ b/core/java/android/widget/PopupWindow.java
+@@ -1206,13 +1206,18 @@ public class PopupWindow {
+ 
+         p.gravity = Gravity.LEFT | Gravity.TOP;
+ 
+-        anchor.getLocationOnScreen(mScreenLocation);
++//dingej1 ,2013,12,19 BLADEFHD-345, begin.
++/*rootcause: After merge multiwindow from 4.4. the stackbox app do not layout with absolute display coordinate.
++So the coordinate calcute wrong. Force all use the relative coordinate.
++*/
++//        anchor.getLocationOnScreen(mScreenLocation);
++        anchor.getLocationInWindow(mScreenLocation);
+         final Rect displayFrame = new Rect();
+-        anchor.getWindowVisibleDisplayFrame(displayFrame);
+-
++//        anchor.getWindowVisibleDisplayFrame(displayFrame);
++        final View root = anchor.getRootView();
++        root.getGlobalVisibleRect(displayFrame);
+         int screenY = mScreenLocation[1] + anchorHeight + yoff;
+         
+-        final View root = anchor.getRootView();
+         if (screenY + mPopupHeight > displayFrame.bottom ||
+                 p.x + mPopupWidth - root.getWidth() > 0) {
+             // if the drop down disappears at the bottom of the screen. we try to
+@@ -1238,8 +1243,9 @@ public class PopupWindow {
+             }
+             
+             // determine whether there is more space above or below the anchor
+-            anchor.getLocationOnScreen(mScreenLocation);
+-            
++//            anchor.getLocationOnScreen(mScreenLocation);
++            anchor.getLocationInWindow(mScreenLocation);
++//dingej1 2013,12,19. end
+             onTop = (displayFrame.bottom - mScreenLocation[1] - anchor.getHeight() - yoff) <
+                     (mScreenLocation[1] - yoff - displayFrame.top);
+             if (onTop) {
+@@ -1257,6 +1263,7 @@ public class PopupWindow {
+             if (right > displayFrameWidth) {
+                 p.x -= right - displayFrameWidth;
+             }
++
+             if (p.x < displayFrame.left) {
+                 p.x = displayFrame.left;
+                 p.width = Math.min(p.width, displayFrameWidth);
+@@ -1333,7 +1340,9 @@ public class PopupWindow {
+         int bottomEdge = displayFrame.bottom;
+         if (ignoreBottomDecorations) {
+             Resources res = anchor.getContext().getResources();
+-            bottomEdge = res.getDisplayMetrics().heightPixels;
++//dingej1 2013,12,27 should not large than stackbox frame,begin.
++            bottomEdge = Math.min(res.getDisplayMetrics().heightPixels, bottomEdge);
++//dingej1 end.
+         }
+         final int distanceToBottom = bottomEdge - (anchorPos[1] + anchor.getHeight()) - yOffset;
+         final int distanceToTop = anchorPos[1] - displayFrame.top + yOffset;
+diff --git a/core/res/res/values-sw720dp/dimens.xml b/core/res/res/values-sw720dp/dimens.xml
+index 90b0091..8d42d7f 100644
+--- a/core/res/res/values-sw720dp/dimens.xml
++++ b/core/res/res/values-sw720dp/dimens.xml
+@@ -34,10 +34,11 @@
+          (the screen is in landscape). This may be either a fraction or a dimension.-->
+     <item type="dimen" name="dialog_fixed_height_minor">90%</item>
+ 
++    <!-- Lenovo sw, xieqiong2 modify 2014.2.19 for BLADEFHD-2229 -->
+     <!-- The width that is used when creating thumbnails of applications. -->
+-    <dimen name="thumbnail_width">230dp</dimen>
++    <dimen name="thumbnail_width">380dp</dimen>
+     <!-- The height that is used when creating thumbnails of applications. -->
+-    <dimen name="thumbnail_height">135dp</dimen>
++    <dimen name="thumbnail_height">250dp</dimen>
+ 
+     <!-- Preference activity, vertical padding for the header list -->
+     <dimen name="preference_screen_header_vertical_padding">32dp</dimen>
+diff --git a/core/res/res/values/lenovo_arrays.xml b/core/res/res/values/lenovo_arrays.xml
+index 7e0c7f3..6fd204c 100644
+--- a/core/res/res/values/lenovo_arrays.xml
++++ b/core/res/res/values/lenovo_arrays.xml
+@@ -45,4 +45,87 @@
+         <item>China Telecom</item>
+     </string-array>
+     <!-- End,Lenovo-sw piyy1 add 2014-01-10, add for add apn to 2G card -->
++    <!-- Begin,Lenovo-sw Tom-liming11 add 2014-02-21, add for Multi-window -->
++    <string-array name="apps_white_list" translatable="false">
++        <item>"com.route66.maps5"</item>
++        <item>"com.lenovo.email"</item>
++        <item>"com.lenovo.ideafriend"</item>
++        <item>"com.lenovo.browser"</item>
++        <item>"com.android.calculator2"</item>
++        <item>"com.lenovo.videoplayer"</item>
++        <item>"com.lenovo.calendar"</item>
++        <item>"com.lenovo.magicplus"</item>
++        <item>"com.lenovo.anyshare.gps"</item>
++        <item>"com.lenovo.compass"</item>
++        <item>"com.lenovo.fm"</item>
++        <item>"com.lenovo.powercenter"</item>
++        <item>"com.lenovo.leos.cloud.sync.row"</item>
++        <item>"com.lenovo.android.settings.tether"</item>
++        <item>"com.lenovo.themecenter"</item>
++        <item>"com.lenovo.miracast"</item>
++        <item>"com.android.settings"</item>
++        <item>"com.novicetutorial"</item>
++        <item>"com.android.chrome"</item>
++        <item>"com.google.android.gm"</item>
++        <item>"com.google.android.apps.maps"</item>
++        <item>"com.google.android.youtube"</item>
++        <item>"com.android.vending"</item>
++        <item>"com.google.android.apps.books"</item>
++        <item>"com.google.android.videos"</item>
++        <item>"com.google.android.music"</item>
++        <item>"com.google.android.apps.plus"</item>
++        <item>"com.google.android.talk"</item>
++        <item>"com.lenovo.safecenter.hd"</item>
++        <item>"com.lenovo.leos.appstore.pad"</item>
++        <item>"com.lenovo.supernote"</item>
++        <item>"com.lenovo.service"</item>
++        <item>"com.lenovo.gameworld"</item>
++        <item>"com.lenovo.videotalk.pad"</item>
++        <item>"com.lenovo.lps.cloud.sync"</item>
++        <item>"com.lenovo.lps.cloud.sync.row"</item>
++        <item>"com.lenovo.anyshare"</item>
++        <item>"com.lenovo.lsf"</item>
++        <item>"com.lenovo.powercenterhd"</item>
++        <item>"com.lenovo.lewea"</item>
++        <item>"com.lenovo.scgqc"</item>
++        <item>"com.android.soundrecorder"</item>
++        <item>"com.android.deskclock"</item>
++        <item>"com.lenovo.lenovosearch"</item>
++        <item>"com.lenovo.FileBrowser"</item>
++        <item>"com.lenovo.ota"</item>
++        <item>"com.tencent.hd.qq"</item>
++        <item>"com.sina.weibo"</item>
++        <item>"com.alibaba.android.babylon"</item>
++        <item>"im.yixin"</item>
++        <item>"com.youku.phone"</item>
++        <item>"com.sohu.sohuvideo"</item>
++        <item>"com.qiyi.video.hd"</item>
++        <item>"com.letv.android.client"</item>
++        <item>"com.kascend.video"</item>
++        <item>"com.duomi.android"</item>
++        <item>"com.ting.mp3.oemc.android"</item>
++        <item>"com.baidu.searchbox_lenovo"</item>
++        <item>"com.baidu.BaiduMap"</item>
++        <item>"com.autonavi.minimap"</item>
++        <item>"com.taobao.taobao"</item>
++        <item>"com.alipay.android.app"</item>
++        <item>"com.tmall.wireless"</item>
++        <item>"cn.amazon.mShop.android"</item>
++        <item>"com.UCMobile"</item>
++        <item>"com.oupeng.browser"</item>
++        <item>"com.tencent.mm"</item>
++        <item>"om.sohu.newsclient"</item>
++        <item>"com.netease.lenovophone.activity"</item>
++        <item>"com.dianping.v1"</item>
++        <item>"com.jingdong.app.mall"</item>
++        <item>"cn.wps.moffice_eng"</item>
++        <item>"com.iyd.reader.ReadingJoy"</item>
++        <item>"com.youdao.dict"</item>
++        <item>"cn.jingling.motu.photowonder"</item>
++        <item>"org.cocos2dx.FishingJoy2"</item>
++        <item>"com.gameloft.android.TBFV.GloftAIHP"</item>
++        <item>"com.imangi.templerun2"</item>
++        <item>"cn.emoney.level2"</item>
++    </string-array>
++    <!-- End,Lenovo-sw Tom-liming11 add 2014-02-21, add for Multi-window -->
+ </resources>
+diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
+index 99f4605..98a7d49 100644
+--- a/core/res/res/values/symbols.xml
++++ b/core/res/res/values/symbols.xml
+@@ -1850,4 +1850,7 @@
+   <java-symbol type="drawable" name="ic_meeting_profile" />
+   <java-symbol type="drawable" name="ic_outdoors_profile" />
+   <java-symbol type="bool" name="config_enableAudioProfileOnGlobalActions" />
++  <!-- Begin,Lenovo-sw Tom-liming11 add 2014-02-21, add for Multi-window -->
++  <java-symbol type="array" name="apps_white_list" />
++  <!-- End,Lenovo-sw Tom-liming11 add 2014-02-21, add for Multi-window -->
+ </resources>
+diff --git a/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java b/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
+index 44c4cfe..1ed6349 100644
+--- a/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
++++ b/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
+@@ -5884,4 +5884,34 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+         mStatusBarController.dump(pw, prefix);
+         mNavigationBarController.dump(pw, prefix);
+     }
++
++    void triggerSplitService(boolean shown, int userId) {
++        Intent splitService = new Intent();
++        ComponentName cn = new ComponentName("com.android.systemui",
++                "com.android.systemui.splitbar.FloatingWindowService");
++        splitService.setComponent(cn);
++        splitService.putExtra("addSplitUI", shown);
++        mContext.startServiceAsUser(splitService, new UserHandle(userId));
++    }
++
++    boolean started=false;
++
++    /*Lenovo sw, xieqiong2 modify 2014.2.18 for BLADEFHD-2291 */
++    public void showSplitterWindow(boolean enable, boolean change) {
++        Log.d(TAG, "showSplitterWindow,  enable =" + enable + ",started = " + started +  ",change = " + change);
++        if (change) {
++            triggerSplitService(enable, UserHandle.USER_CURRENT);
++        }else if (started!=enable) {
++            triggerSplitService(enable, UserHandle.USER_CURRENT);
++        }
++        started = enable;
++    }
++
++    @Override
++    public void showSplitterWindow(boolean enable, int userId) {
++        if (started!=enable) {
++            started = enable;
++            triggerSplitService(enable, userId);
++        }
++    }
+ }
+diff --git a/services/java/com/android/server/am/ActivityManagerService.java b/services/java/com/android/server/am/ActivityManagerService.java
+index 54389e2..e46a5f1 100644
+--- a/services/java/com/android/server/am/ActivityManagerService.java
++++ b/services/java/com/android/server/am/ActivityManagerService.java
+@@ -2272,7 +2272,35 @@ public final class ActivityManagerService extends ActivityManagerNative
+             }
+         }
+     }
++	
++    public void setFocusedStack2(int stackId) {
++	if (DEBUG_FOCUS) Slog.d(TAG, "setFocusedStack2: stackId=" + stackId);
++	synchronized (ActivityManagerService.this) {
++            mStackSupervisor.setFocusedStack(stackId);
++        }
++    }
++
++    public void removeEmptyStack2(int stackId) {
++	if (DEBUG_FOCUS) Slog.d(TAG, "removeEmptyStack2: stackId=" + stackId);
++	synchronized (ActivityManagerService.this) {
++            mStackSupervisor.removeEmptyStack(stackId);
++        }
++    }
+ 
++    public int getFocusedStack2() {
++            if (DEBUG_FOCUS) Slog.d(TAG, "getFocusedStack2");
++            //TODO: shall we lock this function call?
++            //if we synchronize ActivityManagerService, seems will cause dead lock
++            return mStackSupervisor.getFocusedStack().getStackId();
++    }
++/*Begin,Lenovo-sw Tom_liming11 add 2014-04-21, add for SystemUI about MultiWindow*/
++    public void setLockFocusSwitch(boolean bLock) {
++    if (DEBUG_FOCUS) Slog.d(TAG, "setLockFocusSwitch: status=" + bLock);
++    synchronized (ActivityManagerService.this) {
++            mWindowManager.setLockFocusSwitch(bLock);
++        }
++    }
++/*End,Lenovo-sw Tom_liming11 add 2014-04-21, add for SystemUI about MultiWindow*/
+     @Override
+     public void notifyActivityDrawn(IBinder token) {
+         if (DEBUG_VISBILITY) Slog.d(TAG, "notifyActivityDrawn: token=" + token);
+@@ -6862,7 +6890,7 @@ public final class ActivityManagerService extends ActivityManagerNative
+         ActivityRecord topRecord = null;
+ 
+         synchronized(this) {
+-            if (localLOGV) Slog.v(
++            if (DEBUG_TASKS) Slog.v(
+                 TAG, "getTasks: max=" + maxNum + ", flags=" + flags
+                 + ", receiver=" + receiver);
+ 
+@@ -6892,10 +6920,10 @@ public final class ActivityManagerService extends ActivityManagerNative
+             }
+         }
+ 
+-        if (localLOGV) Slog.v(TAG, "We have pending thumbnails: " + pending);
++        if (DEBUG_TASKS) Slog.v(TAG, "We have pending thumbnails: " + pending);
+ 
+         if (topRecord != null) {
+-            if (localLOGV) Slog.v(TAG, "Requesting top thumbnail");
++            if (DEBUG_TASKS) Slog.v(TAG, "Requesting top thumbnail");
+             try {
+                 IApplicationThread topThumbnail = topRecord.app.thread;
+                 topThumbnail.requestThumbnail(topRecord.appToken);
+@@ -7062,6 +7090,11 @@ public final class ActivityManagerService extends ActivityManagerNative
+         }
+     }
+ 
++    void moveTaskToBottomOfRecentTaskList(TaskRecord tr) {
++        mRecentTasks.remove(tr);
++        mRecentTasks.add(tr);
++    }
++
+     private void cleanUpRemovedTaskLocked(TaskRecord tr, int flags) {
+         tr.disposeThumbnail();
+         mRecentTasks.remove(tr);
+@@ -16808,4 +16841,48 @@ public final class ActivityManagerService extends ActivityManagerNative
+     }
+     /* end zhangsx10 framework support for ideafriend */
+ 
++
++    @Override
++    public boolean showMultiWindow() {
++        if (this.getFocusedStack2() == HOME_STACK_ID && this.getFocusedStack().topActivity().isHomeActivity() && this.mStackSupervisor.getStacks().size() > 2) {
++            ActivityStack nonHomeFocusedStack = this.mStackSupervisor.getNonHomeFocusedStack();
++            if (showStack(nonHomeFocusedStack)) {
++                return true;
++            }
++            List<ActivityStack> stacks = this.mStackSupervisor.getStacks();
++            for (int i = 1; i < stacks.size(); i++) {
++                if (showStack(stacks.get(i))) {
++                    return true;
++                }
++            }
++        }
++        return false;
++    }
++
++    private boolean showStack(ActivityStack stack) {
++        if (stack != null && stack.topTask() != null) {
++            this.moveTaskToFront(stack.topTask().taskId, 0, null);
++            this.setFocusedActivityLocked(mStackSupervisor.topRunningActivityLocked());
++            return true;
++        }
++        return false;
++    }
++
++    @Override
++    public void removeStack(int stackId, boolean removeTask) {
++        this.mStackSupervisor.removeStack(stackId, removeTask);
++    }
++
++    @Override
++    public boolean setFocusedTask(int taskId) {
++        TaskRecord task = this.mStackSupervisor.anyTaskForIdLocked(taskId);
++        if (task == null)
++            return false;
++        ActivityRecord activity = task.topRunningActivityLocked(null);
++        if (activity == null)
++            return false;
++        this.setFocusedActivityLocked(activity);
++        return true;
++    }
++
+ }
+diff --git a/services/java/com/android/server/am/ActivityRecord.java b/services/java/com/android/server/am/ActivityRecord.java
+index b05d0b7..20430e6 100644
+--- a/services/java/com/android/server/am/ActivityRecord.java
++++ b/services/java/com/android/server/am/ActivityRecord.java
+@@ -82,6 +82,7 @@ final class ActivityRecord {
+     static final int APPLICATION_ACTIVITY_TYPE = 0;
+     static final int HOME_ACTIVITY_TYPE = 1;
+     static final int RECENTS_ACTIVITY_TYPE = 2;
++    static final int MULTIWINDOW_ACTIVITY_TYPE = 4;
+     int mActivityType;
+ 
+     final String baseDir;   // where activity source (resources etc) located
+@@ -459,7 +460,10 @@ final class ActivityRecord {
+             } else if (realActivity.getClassName().contains(RECENTS_PACKAGE_NAME)) {
+                 mActivityType = RECENTS_ACTIVITY_TYPE;
+             } else {
+-                mActivityType = APPLICATION_ACTIVITY_TYPE;
++                if ((intent.getFlags() & Intent.FLAG_ACTIVITY_MULTIWINDOW) != 0)
++                    mActivityType = MULTIWINDOW_ACTIVITY_TYPE;
++                else
++                    mActivityType = APPLICATION_ACTIVITY_TYPE;
+             }
+ 
+             immersive = (aInfo.flags & ActivityInfo.FLAG_IMMERSIVE) != 0;
+@@ -565,6 +569,10 @@ final class ActivityRecord {
+         return mActivityType == APPLICATION_ACTIVITY_TYPE;
+     }
+ 
++    boolean isMultiWindowActivity() {
++        return mActivityType == MULTIWINDOW_ACTIVITY_TYPE;
++    }
++
+     void makeFinishing() {
+         if (!finishing) {
+             finishing = true;
+diff --git a/services/java/com/android/server/am/ActivityStack.java b/services/java/com/android/server/am/ActivityStack.java
+index 0c886ae..5e421f3 100644
+--- a/services/java/com/android/server/am/ActivityStack.java
++++ b/services/java/com/android/server/am/ActivityStack.java
+@@ -42,6 +42,7 @@ import com.android.server.Watchdog;
+ import com.android.server.am.ActivityManagerService.ItemMatcher;
+ import com.android.server.wm.AppTransition;
+ import com.android.server.wm.TaskGroup;
++import com.android.server.wm.TaskStack;
+ import com.android.server.wm.WindowManagerService;
+ 
+ import android.app.Activity;
+@@ -545,7 +546,11 @@ final class ActivityStack {
+         for (int taskNdx = mTaskHistory.size() - 1; taskNdx >= 0; --taskNdx) {
+             TaskRecord task = mTaskHistory.get(taskNdx);
+             if (task.userId != mCurrentUser) {
+-                return null;
++//dingej1 2014,1,15 begin. BLADEFHD-1239 RecentsActivity is LAUNCH_SINGLE_INSTANCE.
++//RecentsActivity record can not be found even it exist.
++                continue;
++                //return null;
++//dingej1 end.
+             }
+             final ArrayList<ActivityRecord> activities = task.mActivities;
+             for (int activityNdx = activities.size() - 1; activityNdx >= 0; --activityNdx) {
+@@ -819,6 +824,9 @@ final class ActivityStack {
+ 
+         final ActivityRecord r = isInStackLocked(token);
+         if (r != null) {
++            //dingej1 2013,12,31 begin. add mLastPausedHome flag.
++            mStackSupervisor.mLastPausedHome = r.isHomeActivity();
++            //dingej1 end.
+             mHandler.removeMessages(PAUSE_TIMEOUT_MSG, r);
+             if (mPausingActivity == r) {
+                 if (DEBUG_STATES) Slog.v(TAG, "Moving to PAUSED: " + r
+@@ -1063,6 +1071,16 @@ final class ActivityStack {
+         boolean showHomeBehindStack = false;
+         boolean behindFullscreen = !mStackSupervisor.isFrontStack(this) &&
+                 !(forceHomeShown && isHomeStack());
++
++//dingej1 2013,12,31 begin. add policy to let RecentsActivity show backgroud activity.
++       final boolean isRecent = mStackSupervisor.topRunningActivityLocked().isRecentsActivity();
++       if(isRecent && !mStackSupervisor.mLastPausedHome){
++           if(isHomeStack())
++               return false;
++           else
++               behindFullscreen = false;
++       }
++//dingej1 end.
+         for (int taskNdx = mTaskHistory.size() - 1; taskNdx >= 0; --taskNdx) {
+             final TaskRecord task = mTaskHistory.get(taskNdx);
+             final ArrayList<ActivityRecord> activities = task.mActivities;
+@@ -1101,6 +1119,7 @@ final class ActivityStack {
+                             if (!r.visible) {
+                                 if (DEBUG_VISBILITY) Slog.v(
+                                         TAG, "Starting and making visible: " + r);
++                                r.visible = true;
+                                 mWindowManager.setAppVisibility(r.appToken, true);
+                             }
+                             if (r != starting) {
+@@ -1151,7 +1170,7 @@ final class ActivityStack {
+                     } else if (isActivityOverHome(r)) {
+                         if (DEBUG_VISBILITY) Slog.v(TAG, "Showing home: at " + r);
+                         showHomeBehindStack = true;
+-                        behindFullscreen = !isHomeStack();
++                        behindFullscreen = !isHomeStack() && r.frontOfTask && task.mOnTopOfHome;
+                     }
+                 } else {
+                     if (DEBUG_VISBILITY) Slog.v(
+@@ -1266,6 +1285,10 @@ final class ActivityStack {
+         mStackSupervisor.mUserLeaving = false;
+ 
+         if (next == null) {
++            TaskStack ts = mStackSupervisor.mService.mWindowManager.mStackIdToStack.get(mStackId);
++            if (mStackId!=HOME_STACK_ID && ts.hasSibling()==true){
++                return false;  // let go
++            }
+             // There are no more activities!  Let's just start up the
+             // Launcher...
+             ActivityOptions.abort(options);
+@@ -1273,7 +1296,6 @@ final class ActivityStack {
+             if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+             return mStackSupervisor.resumeHomeActivity(prev);
+         }
+-
+         next.delayedResume = false;
+ 
+         // If the top activity is the resumed one, nothing to do.
+@@ -2234,8 +2256,15 @@ final class ActivityStack {
+             ActivityRecord next = topRunningActivityLocked(null);
+             if (next != r) {
+                 final TaskRecord task = r.task;
+-                if (r.frontOfTask && task == topTask() && task.mOnTopOfHome) {
+-                    mStackSupervisor.moveHomeToTop();
++                TaskStack ts = r.mStackSupervisor.mService.mWindowManager.mStackIdToStack.get(r.mStackSupervisor.getFocusedStack().mStackId);
++                if (r.frontOfTask && task == topTask() && task.mOnTopOfHome && ts.hasSibling()==false) {
++                     mStackSupervisor.moveHomeToTop();
++//dingej1 2014,1,10 begin. add fullscreen activity bypass.BLADEFHD-985
++                } else if (ts.hasSibling()) {
++//dingej1 end.
++                    if (next!=null && mTaskHistory.size()>1 && next.mStackSupervisor.getFocusedStack()!=null){
++                        mStackSupervisor.moveTaskToStack(next.task.taskId, next.mStackSupervisor.getFocusedStack().mStackId, true);
++                    }
+                 }
+             }
+             mService.setFocusedActivityLocked(mStackSupervisor.topRunningActivityLocked());
+@@ -2441,9 +2470,13 @@ final class ActivityStack {
+ 
+         r.pauseKeyDispatchingLocked();
+ 
+-        adjustFocusedActivityLocked(r);
+-
++//dingej1 2014,1,10 begin.add results before activity switch BLADEFHD-985.
+         finishActivityResultsLocked(r, resultCode, resultData);
++//dingej1 2014,3,5 begin. If startActivity call performClearTaskLocked, It will change mFocusStack to wrong state.
++        if (!"clear".equals(reason))
++            adjustFocusedActivityLocked(r);
++//dingej1 end.
++//dingej1 2014,1,10 end.
+ 
+         if (!mService.mPendingThumbnails.isEmpty()) {
+             // There are clients waiting to receive thumbnails so, in case
+@@ -2493,7 +2526,9 @@ final class ActivityStack {
+             if (!mStackSupervisor.mStoppingActivities.contains(r)) {
+                 mStackSupervisor.mStoppingActivities.add(r);
+                 if (mStackSupervisor.mStoppingActivities.size() > 3
+-                        || r.frontOfTask && mTaskHistory.size() <= 1) {
++//dingej1 2014,2,11 BLADEFHD-1313. Force call scheduleDestroyActivity to app side and then delete this stackbox.
++                        || r.frontOfTask /* && mTaskHistory.size() <= 1 */) {
++//dingej1 end
+                     // If we already have a few activities waiting to stop,
+                     // then give up on things going idle and start clearing
+                     // them out. Or if r is the last of activity of the last task the stack
+@@ -2703,7 +2738,12 @@ final class ActivityStack {
+             if (DEBUG_STACK) Slog.i(TAG,
+                     "removeActivityFromHistoryLocked: last activity removed from " + this);
+             if (mStackSupervisor.isFrontStack(this) && task == topTask() && task.mOnTopOfHome) {
+-                mStackSupervisor.moveHomeToTop();
++                TaskStack ts = mStackSupervisor.mService.mWindowManager.mStackIdToStack.get(mStackId);
++                if (mStackId!=HOME_STACK_ID && ts.hasSibling()==true){
++                    //do nothing
++                } else {
++                    mStackSupervisor.moveHomeToTop();
++                }
+             }
+             mStackSupervisor.removeTask(task);
+         }
+@@ -3141,6 +3181,7 @@ final class ActivityStack {
+         mTaskHistory.remove(tr);
+         mTaskHistory.add(0, tr);
+ 
++
+         // There is an assumption that moving a task to the back moves it behind the home activity.
+         // We make sure here that some activity in the stack will launch home.
+         ActivityRecord lastActivity = null;
+@@ -3172,12 +3213,18 @@ final class ActivityStack {
+             validateAppTokensLocked();
+         }
+ 
+-        final TaskRecord task = mResumedActivity != null ? mResumedActivity.task : null;
+-        if (task == tr && task.mOnTopOfHome || numTasks <= 1) {
+-            if (task != null) {
+-                task.mOnTopOfHome = false;
++        if (this.isHomeStack()) {
++            final TaskRecord task = mResumedActivity != null ? mResumedActivity.task : null;
++            if (task == tr && task.mOnTopOfHome) {
++                tr.mOnTopOfHome = false;
+             }
+-            return mStackSupervisor.resumeHomeActivity(null);
++        } else if (numTasks > 1) {
++            this.mStackSupervisor.moveTaskToStack(tr.taskId,
++                    ActivityStackSupervisor.HOME_STACK_ID, false);
++        } else {
++            this.mResumedActivity = null;
++            this.mStackSupervisor.removeStack(this.getStackId(), false);
++            return true;
+         }
+ 
+         mStackSupervisor.resumeTopActivitiesLocked();
+@@ -3460,7 +3507,7 @@ final class ActivityStack {
+                     numRunning++;
+                 }
+ 
+-                if (localLOGV) Slog.v(
++                if (DEBUG_TASKS) Slog.v(
+                     TAG, r.intent.getComponent().flattenToShortString()
+                     + ": task=" + r.task);
+             }
+@@ -3615,6 +3662,7 @@ final class ActivityStack {
+     }
+ 
+     boolean removeTask(TaskRecord task) {
++        synchronized(mTaskHistory){
+         final int taskNdx = mTaskHistory.indexOf(task);
+         final int topTaskNdx = mTaskHistory.size() - 1;
+         if (task.mOnTopOfHome && taskNdx < topTaskNdx) {
+@@ -3622,6 +3670,11 @@ final class ActivityStack {
+         }
+         mTaskHistory.remove(task);
+         return mTaskHistory.isEmpty();
++        }
++    }
++
++    boolean isTaskHistoryEmpty() {
++        return mTaskHistory.isEmpty();
+     }
+ 
+     TaskRecord createTaskRecord(int taskId, ActivityInfo info, Intent intent, boolean toTop) {
+@@ -3636,6 +3689,7 @@ final class ActivityStack {
+ 
+     void addTask(final TaskRecord task, final boolean toTop) {
+         task.stack = this;
++        task.setAppType(isHomeStack());
+         if (toTop) {
+             insertTaskAtTop(task);
+         } else {
+diff --git a/services/java/com/android/server/am/ActivityStackSupervisor.java b/services/java/com/android/server/am/ActivityStackSupervisor.java
+index 3a04308..33713bc 100644
+--- a/services/java/com/android/server/am/ActivityStackSupervisor.java
++++ b/services/java/com/android/server/am/ActivityStackSupervisor.java
+@@ -164,7 +164,9 @@ public final class ActivityStackSupervisor {
+     private static final int STACK_STATE_HOME_IN_BACK = 2;
+     private static final int STACK_STATE_HOME_TO_FRONT = 3;
+     private int mStackState = STACK_STATE_HOME_IN_FRONT;
+-
++//dingej1 20013,12,31 begin. add flag to check whether the last pasued activity is home.
++    public boolean mLastPausedHome =false;
++//dingej1 end.
+     /** List of activities that are waiting for a new activity to become visible before completing
+      * whatever operation they are supposed to do. */
+     final ArrayList<ActivityRecord> mWaitingVisibleActivities = new ArrayList<ActivityRecord>();
+@@ -345,8 +347,9 @@ public final class ActivityStackSupervisor {
+         return mCurTaskId;
+     }
+ 
+-    void removeTask(TaskRecord task) {
++    void removeTask(TaskRecord task, boolean bReconfigurationNeeded) {
+         mWindowManager.removeTask(task.taskId);
++        Slog.v(TAG, "cire:task removed from wms");
+         final ActivityStack stack = task.stack;
+         final ActivityRecord r = stack.mResumedActivity;
+         if (r != null && r.task == task) {
+@@ -356,15 +359,49 @@ public final class ActivityStackSupervisor {
+             if (DEBUG_STACK) Slog.i(TAG, "removeTask: removing stack " + stack);
+             mStacks.remove(stack);
+             final int stackId = stack.mStackId;
+-            final int nextStackId = mWindowManager.removeStack(stackId);
++            final int nextStackId = mWindowManager.removeStack(stackId,bReconfigurationNeeded);
++            Slog.v(TAG, "cire:stack removed from wms");
+             // TODO: Perhaps we need to let the ActivityManager determine the next focus...
+             if (mFocusedStack == null || mFocusedStack.mStackId == stackId) {
+                 // If this is the last app stack, set mFocusedStack to null.
+                 mFocusedStack = nextStackId == HOME_STACK_ID ? null : getStack(nextStackId);
+             }
++
++            // clean up empty stackboxes just in case,we put inside the loop to avoid peformance issue
++            for (int stackNdx = mStacks.size() - 1; stackNdx >= 0; --stackNdx) {
++                ActivityStack stacka = mStacks.get(stackNdx);
++                removeEmptyStack(stacka.mStackId);
++            }
+         }
+     }
+ 
++    void removeEmptyStack(int stackId) {
++        final ActivityStack stack = getStack(stackId);
++        if (DEBUG_STACK) Slog.v(TAG, "cire:prepare to remove :"+stackId+"   ("+stack);
++        if (stack == null){
++            if (DEBUG_STACK) Slog.v(TAG, "cire: can not find the stack!!!!");
++            return;
++        }
++        if (stack.isHomeStack() || !(stack.isTaskHistoryEmpty())){
++            if (DEBUG_STACK) Slog.v(TAG, "cire: something wrong!!!!");
++            return;
++        } else {
++            if (DEBUG_STACK) Slog.i(TAG, "removeEmptyStack: removing stack " + stack);
++            mStacks.remove(stack);
++            final int nextStackId = mService.mWindowManager.removeStack(stackId);
++            if (DEBUG_STACK) Slog.v(TAG, "cire:stack removed from wms");
++            // TODO: Perhaps we need to let the ActivityManager determine the next focus...
++            if (mFocusedStack == null || mFocusedStack.mStackId == stackId) {
++                // If this is the last app stack, set mFocusedStack to null.
++                mFocusedStack = nextStackId == HOME_STACK_ID ? null : getStack(nextStackId);
++            }
++        }
++    }
++
++    void removeTask(TaskRecord task) {
++        removeTask(task, true);
++    }
++
+     ActivityRecord resumedAppLocked() {
+         ActivityStack stack = getFocusedStack();
+         if (stack == null) {
+@@ -485,6 +522,16 @@ public final class ActivityStackSupervisor {
+         return someActivityPaused;
+     }
+ 
++    void pauseBackStack(int stackId) {
++        ActivityStack stack = this.getStack(stackId);
++        if (stack == null) {
++            return;
++        }
++        if (stack.mResumedActivity != null) {
++            stack.startPausingLocked(false, false);
++        }
++    }
++
+     boolean allPausedActivitiesComplete() {
+         boolean pausing = true;
+         for (int stackNdx = mStacks.size() - 1; stackNdx >= 0; --stackNdx) {
+@@ -1333,20 +1380,7 @@ public final class ActivityStackSupervisor {
+ 
+     ActivityStack adjustStackFocus(ActivityRecord r) {
+         final TaskRecord task = r.task;
+-        if (r.isApplicationActivity() || (task != null && task.isApplicationTask())) {
+-            if (task != null) {
+-                final ActivityStack taskStack = task.stack;
+-                if (mFocusedStack != taskStack) {
+-                    if (DEBUG_FOCUS || DEBUG_STACK) Slog.d(TAG,
+-                            "adjustStackFocus: Setting focused stack to r=" + r + " task=" + task);
+-                    mFocusedStack = taskStack.isHomeStack() ? null : taskStack;
+-                } else {
+-                    if (DEBUG_FOCUS || DEBUG_STACK) Slog.d(TAG,
+-                        "adjustStackFocus: Focused stack already=" + mFocusedStack);
+-                }
+-                return taskStack;
+-            }
+-
++        if (r.isMultiWindowActivity() || (task != null && task.isMultiWindowTask())) {
+             if (mFocusedStack != null) {
+                 if (DEBUG_FOCUS || DEBUG_STACK) Slog.d(TAG,
+                         "adjustStackFocus: Have a focused stack=" + mFocusedStack);
+@@ -1373,12 +1407,15 @@ public final class ActivityStackSupervisor {
+         }
+         return mHomeStack;
+     }
+-
++    void setFocusedStack(int stackId){
++    	mFocusedStack = getStack(stackId);
++    	return;
++    }
+     void setFocusedStack(ActivityRecord r) {
+         if (r == null) {
+             return;
+         }
+-        if (!r.isApplicationActivity() || (r.task != null && !r.task.isApplicationTask())) {
++        if (!r.isMultiWindowActivity() || (r.task != null && !r.task.isMultiWindowTask())) {
+             if (mStackState != STACK_STATE_HOME_IN_FRONT) {
+                 if (DEBUG_STACK || DEBUG_FOCUS) Slog.d(TAG, "setFocusedStack: mStackState old=" +
+                         stackStateToString(mStackState) + " new=" +
+@@ -1500,6 +1537,7 @@ public final class ActivityStackSupervisor {
+ 
+         boolean addingToTask = false;
+         boolean movedHome = false;
++        boolean topSwitch = false;
+         TaskRecord reuseTask = null;
+         ActivityStack targetStack;
+         if (((launchFlags&Intent.FLAG_ACTIVITY_NEW_TASK) != 0 &&
+@@ -1521,6 +1559,15 @@ public final class ActivityStackSupervisor {
+                     if (r.task == null) {
+                         r.task = intentActivity.task;
+                     }
++                    if (r.isMultiWindowActivity()) {
++                        targetStack = adjustStackFocus(r);
++                        if (targetStack.getStackId() != intentActivity.task.stack.getStackId()) {
++                            moveHomeStack(targetStack.isHomeStack());
++                            moveTaskToStack(intentActivity.task.taskId, targetStack.mStackId, true);
++                            mService.setFocusedActivityLocked(this.topRunningActivityLocked());
++                            return ActivityManager.START_TASK_TO_FRONT;
++                        }
++                    }
+                     targetStack = intentActivity.task.stack;
+                     targetStack.mLastPausedActivity = null;
+                     if (DEBUG_TASKS) Slog.d(TAG, "Bring to front target: " + targetStack
+@@ -1551,6 +1598,7 @@ public final class ActivityStackSupervisor {
+                             // user's face, right now.
+                             movedHome = true;
+                             targetStack.moveTaskToFrontLocked(intentActivity.task, r, options);
++                            mService.setFocusedActivityLocked(intentActivity);
+                             if ((launchFlags &
+                                     (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_TASK_ON_HOME))
+                                     == (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_TASK_ON_HOME)) {
+@@ -1589,6 +1637,7 @@ public final class ActivityStackSupervisor {
+                         reuseTask = intentActivity.task;
+                         reuseTask.performClearTaskLocked();
+                         reuseTask.setIntent(r.intent, r.info);
++                        topSwitch = true;
+                     } else if ((launchFlags&Intent.FLAG_ACTIVITY_CLEAR_TOP) != 0
+                             || r.launchMode == ActivityInfo.LAUNCH_SINGLE_TASK
+                             || r.launchMode == ActivityInfo.LAUNCH_SINGLE_INSTANCE) {
+@@ -1598,6 +1647,7 @@ public final class ActivityStackSupervisor {
+                         // initial state.
+                         ActivityRecord top =
+                                 intentActivity.task.performClearTaskLocked(r, launchFlags);
++                        topSwitch = true;
+                         if (top != null) {
+                             if (top.frontOfTask) {
+                                 // Activity aliases may mean we use different
+@@ -1609,6 +1659,7 @@ public final class ActivityStackSupervisor {
+                             ActivityStack.logStartActivity(EventLogTags.AM_NEW_INTENT,
+                                     r, top.task);
+                             top.deliverNewIntentLocked(callingUid, r.intent);
++                            mService.setFocusedActivityLocked(top);
+                         } else {
+                             // A special case: we need to
+                             // start the activity because it is not currently
+@@ -1775,6 +1826,7 @@ public final class ActivityStackSupervisor {
+                 // task, but the caller has asked to clear that task if the
+                 // activity is already running.
+                 ActivityRecord top = sourceTask.performClearTaskLocked(r, launchFlags);
++                topSwitch = true;
+                 keepCurTransition = true;
+                 if (top != null) {
+                     ActivityStack.logStartActivity(EventLogTags.AM_NEW_INTENT, r, top.task);
+@@ -1834,6 +1886,12 @@ public final class ActivityStackSupervisor {
+         mService.grantUriPermissionFromIntentLocked(callingUid, r.packageName,
+                 intent, r.getUriPermissionsLocked());
+ 
++//dingej1 2014,3,4 begin. BLADEFHD-2652.
++// If startActivity call task.performClearTaskLocked could change HomeStack to top. Force refresh it to right state.
++        if (topSwitch) {
++                targetStack.moveTaskToFrontLocked(r.task, r, options);
++        }
++//dingej1 end.
+         if (newTask) {
+             EventLog.writeEvent(EventLogTags.AM_CREATE_TASK, r.userId, r.task.taskId);
+         }
+@@ -2174,6 +2232,10 @@ public final class ActivityStackSupervisor {
+     }
+ 
+     void moveTaskToStack(int taskId, int stackId, boolean toTop) {
++        moveTaskToStack(taskId, stackId, toTop, true);
++    }
++
++    void moveTaskToStack(int taskId, int stackId, boolean toTop, boolean needResume) {
+         final TaskRecord task = anyTaskForIdLocked(taskId);
+         if (task == null) {
+             return;
+@@ -2186,14 +2248,15 @@ public final class ActivityStackSupervisor {
+         removeTask(task);
+         stack.addTask(task, toTop);
+         mWindowManager.addTask(taskId, stackId, toTop);
+-        resumeTopActivitiesLocked();
++        if (needResume)
++            resumeTopActivitiesLocked();
+     }
+ 
+     ActivityRecord findTaskLocked(ActivityRecord r) {
+         if (DEBUG_TASKS) Slog.d(TAG, "Looking for task of " + r);
+         for (int stackNdx = mStacks.size() - 1; stackNdx >= 0; --stackNdx) {
+             final ActivityStack stack = mStacks.get(stackNdx);
+-            if (!r.isApplicationActivity() && !stack.isHomeStack()) {
++            if ((r.isHomeActivity() || r.isRecentsActivity())&& !stack.isHomeStack()) {
+                 if (DEBUG_TASKS) Slog.d(TAG, "Skipping stack: " + stack);
+                 continue;
+             }
+@@ -2388,6 +2451,13 @@ public final class ActivityStackSupervisor {
+     }
+ 
+     boolean switchUserLocked(int userId, UserStartedState uss) {
++//dingej1 2014,1,15 begin. BLADEFHD-1239, Format all other Task to first user stack.
++//0 is homestack, 1 is first user stack.
++        this.mWindowManager.showSplitterWindow(false, mCurrentUser);
++        for (int stackNdx = mStacks.size() - 1; stackNdx >= 1; --stackNdx) {
++            removeStack(mStacks.get(stackNdx).getStackId(), false);
++        }
++//dingej1 end.
+         mUserStackInFront.put(mCurrentUser, getFocusedStack().getStackId());
+         final int restoreStackId = mUserStackInFront.get(userId, HOME_STACK_ID);
+         mCurrentUser = userId;
+@@ -2401,6 +2471,9 @@ public final class ActivityStackSupervisor {
+         if (stack == null) {
+             stack = mHomeStack;
+         }
++//dingej1 2014,2,20 begin BLADEFHD-2330. Set restored focus stack after switching.
++        mService.setFocusedStack(stack.getStackId());
++//dingej1 end.
+         final boolean homeInFront = stack.isHomeStack();
+         moveHomeStack(homeInFront);
+         mWindowManager.moveTaskToTop(stack.topTask().taskId);
+@@ -2504,8 +2577,8 @@ public final class ActivityStackSupervisor {
+     ArrayList<ActivityRecord> getDumpActivitiesLocked(String name) {
+         return getFocusedStack().getDumpActivitiesLocked(name);
+     }
+-
+-    static boolean printThisActivity(PrintWriter pw, ActivityRecord activity, String dumpPackage,
++/*Begin,Lenovo-sw Tom-liming11 add 2014-02-21, add for Multi-window*/
++    /*static boolean printThisActivity(PrintWriter pw, ActivityRecord activity, String dumpPackage,
+             boolean needSep, String prefix) {
+         if (activity != null) {
+             if (dumpPackage == null || dumpPackage.equals(activity.packageName)) {
+@@ -2518,12 +2591,22 @@ public final class ActivityStackSupervisor {
+             }
+         }
+         return false;
+-    }
+-
++    }*/
++/*End,Lenovo-sw Tom-liming11 add 2014-02-21, add for Multi-window*/
+     boolean dumpActivitiesLocked(FileDescriptor fd, PrintWriter pw, boolean dumpAll,
+             boolean dumpClient, String dumpPackage) {
+         boolean printed = false;
+         boolean needSep = false;
++        pw.print("  mStackState="); pw.println(stackStateToString(mStackState));
++        if (mGoingToSleepActivities.size() > 0) {
++            pw.println("  Activities waiting to sleep:");
++            dumpHistoryList(fd, pw, mGoingToSleepActivities, "  ", "Sleep", false, !dumpAll, false,
++                    dumpPackage);
++        }
++        if (dumpAll) {
++            pw.println("  mSleepTimeout: " + mSleepTimeout);
++        }
++        pw.println();
+         final int numStacks = mStacks.size();
+         for (int stackNdx = 0; stackNdx < numStacks; ++stackNdx) {
+             final ActivityStack stack = mStacks.get(stackNdx);
+@@ -2549,6 +2632,18 @@ public final class ActivityStackSupervisor {
+                 printed = true;
+                 needSep = false;
+             }
++            pw.print("  Stack #"); pw.print(mStacks.indexOf(stack)); pw.println(":");
++            //stack.dumpActivitiesLocked(fd, pw, dumpAll, dumpClient, dumpPackage);
++            //pw.println(" ");
++            pw.println("  Running activities (most recent first):");
++            dumpHistoryList(fd, pw, stack.mLRUActivities, "  ", "Run", false, !dumpAll, false,
++                    dumpPackage);
++
++            //pw.print("  Stack #"); pw.println(mStacks.indexOf(stack));
++            if (stack.mPausingActivity != null) {
++                pw.println("  mPausingActivity: " + stack.mPausingActivity);
++            }
++            pw.println("  mResumedActivity: " + stack.mResumedActivity);
+             if (dumpAll) {
+                 pr = printThisActivity(pw, stack.mLastPausedActivity, dumpPackage, needSep,
+                         "    mLastPausedActivity: ");
+@@ -2560,6 +2655,7 @@ public final class ActivityStackSupervisor {
+                         needSep, "    mLastNoHistoryActivity: ");
+             }
+             needSep = printed;
++            pw.println();
+         }
+ 
+         printed |= dumpHistoryList(fd, pw, mFinishingActivities, "  ", "Fin", false, !dumpAll,
+@@ -2573,8 +2669,30 @@ public final class ActivityStackSupervisor {
+                 false, dumpPackage, true, "  Activities waiting to sleep:", null);
+         printed |= dumpHistoryList(fd, pw, mGoingToSleepActivities, "  ", "Sleep", false, !dumpAll,
+                 false, dumpPackage, true, "  Activities waiting to sleep:", null);
++        if (mFinishingActivities.size() > 0) {
++            pw.println("  Activities waiting to finish:");
++            dumpHistoryList(fd, pw, mFinishingActivities, "  ", "Fin", false, !dumpAll, false,
++                    dumpPackage);
++        }
+ 
+-        return printed;
++        if (mStoppingActivities.size() > 0) {
++            pw.println(" ");
++            pw.println("  Activities waiting to stop:");
++            dumpHistoryList(fd, pw, mStoppingActivities, "  ", "Stop", false, !dumpAll, false,
++                    dumpPackage);
++        }
++
++        if (mWaitingVisibleActivities.size() > 0) {
++            pw.println("  Activities waiting for another to become visible:");
++            dumpHistoryList(fd, pw, mWaitingVisibleActivities, "  ", "Wait", false, !dumpAll,
++                    false, dumpPackage);
++        }
++
++        if (dumpAll) {
++            pw.println("  mCurTaskId: " + mCurTaskId);
++        }
++        dumpStack(pw);
++        return true;
+     }
+ 
+     static boolean dumpHistoryList(FileDescriptor fd, PrintWriter pw, List<ActivityRecord> list,
+@@ -2659,7 +2777,76 @@ public final class ActivityStackSupervisor {
+         }
+         return printed;
+     }
+-
++/*Begin,Lenovo-sw Tom-liming11 add 2014-04-21, add for Multi-window*/
++    static void dumpHistoryList(FileDescriptor fd, PrintWriter pw, List<ActivityRecord> list,
++            String prefix, String label, boolean complete, boolean brief, boolean client,
++            String dumpPackage) {
++        TaskRecord lastTask = null;
++        boolean needNL = false;
++        final String innerPrefix = prefix + "      ";
++        final String[] args = new String[0];
++        for (int i=list.size()-1; i>=0; i--) {
++            final ActivityRecord r = list.get(i);
++            if (dumpPackage != null && !dumpPackage.equals(r.packageName)) {
++                continue;
++            }
++            final boolean full = !brief && (complete || !r.isInHistory());
++            if (needNL) {
++                pw.println(" ");
++                needNL = false;
++            }
++            if (lastTask != r.task) {
++                lastTask = r.task;
++                pw.print(prefix);
++                pw.print(full ? "* " : "  ");
++                pw.println(lastTask);
++                if (full) {
++                    lastTask.dump(pw, prefix + "  ");
++                } else if (complete) {
++                    // Complete + brief == give a summary.  Isn't that obvious?!?
++                    if (lastTask.intent != null) {
++                        pw.print(prefix); pw.print("  ");
++                                pw.println(lastTask.intent.toInsecureStringWithClip());
++                    }
++                }
++            }
++            pw.print(prefix); pw.print(full ? "  * " : "    "); pw.print(label);
++            pw.print(" #"); pw.print(i); pw.print(": ");
++            pw.println(r);
++            if (full) {
++                r.dump(pw, innerPrefix);
++            } else if (complete) {
++                // Complete + brief == give a summary.  Isn't that obvious?!?
++                pw.print(innerPrefix); pw.println(r.intent.toInsecureString());
++                if (r.app != null) {
++                    pw.print(innerPrefix); pw.println(r.app);
++                }
++            }
++            if (client && r.app != null && r.app.thread != null) {
++                // flush anything that is already in the PrintWriter since the thread is going
++                // to write to the file descriptor directly
++                pw.flush();
++                try {
++                    TransferPipe tp = new TransferPipe();
++                    try {
++                        r.app.thread.dumpActivity(tp.getWriteFd().getFileDescriptor(),
++                                r.appToken, innerPrefix, args);
++                        // Short timeout, since blocking here can
++                        // deadlock with the application.
++                        tp.go(fd, 2000);
++                    } finally {
++                        tp.kill();
++                    }
++                } catch (IOException e) {
++                    pw.println(innerPrefix + "Failure while dumping the activity: " + e);
++                } catch (RemoteException e) {
++                    pw.println(innerPrefix + "Got a RemoteException while dumping the activity");
++                }
++                needNL = true;
++            }
++        }
++    }
++/*End,Lenovo-sw Tom-liming11 add 2014-04-21, add for Multi-window*/
+     void scheduleIdleTimeoutLocked(ActivityRecord next) {
+         if (DEBUG_IDLE) Slog.d(TAG, "scheduleIdleTimeoutLocked: Callers=" + Debug.getCallers(4));
+         Message msg = mHandler.obtainMessage(IDLE_TIMEOUT_MSG, next);
+@@ -2755,4 +2942,81 @@ public final class ActivityStackSupervisor {
+             }
+         }
+     }
++
++    public ActivityStack getNonHomeFocusedStack() {
++        return this.mFocusedStack;
++    }
++
++    static boolean printThisActivity(PrintWriter pw, ActivityRecord activity, String dumpPackage,
++            boolean needSep, String prefix) {
++        if (activity != null) {
++            if (dumpPackage == null || dumpPackage.equals(activity.packageName)) {
++                if (needSep) {
++                    pw.println();
++                }
++                pw.print(prefix);
++                pw.println(activity);
++                return true;
++            }
++        }
++        return false;
++    }
++
++    public void removeStack(int stackId, boolean removeTask) {
++        if (stackId == HOME_STACK_ID) {
++            return;
++        }
++        ActivityStack stack = this.getStack(stackId);
++        if (stack == null) {
++            return;
++        }
++        ActivityRecord activity = stack.mResumedActivity;
++        if (stack.isTaskHistoryEmpty()) {
++            removeEmptyStack(stackId);
++        } else {
++            for (TaskRecord task : stack.getAllTasks()) {
++                removeTask(task, false);
++                mWindowManager.removeTask(task.taskId);
++                mHomeStack.addTask(task, false);
++                mWindowManager.addTask(task.taskId, mHomeStack.getStackId(), false, false);
++                mService.moveTaskToBottomOfRecentTaskList(task);
++            }
++        }
++        if (activity != null) {
++            mHomeStack.mResumedActivity = activity;
++            pauseBackStack(mHomeStack.getStackId());
++            activity.visible = false;
++            mWindowManager.setAppVisibility(activity.appToken, false);
++        }
++        mWindowManager.layoutNeedExecution();
++        mWindowManager.reconfigurationNeedExecution();
++        ActivityStack focusedStack = this.getFocusedStack();
++        if (focusedStack != null) {
++            TaskRecord task = focusedStack.topTask();
++            if (task != null) {
++                mService.moveTaskToFront(getFocusedStack().topTask().taskId, 0, null);
++            }
++        }
++        mService.setFocusedActivityLocked(topRunningActivityLocked());
++    }
++
++    public void dumpStack(PrintWriter pw) {
++        pw.println("---Stacks---");
++        dumpStack(pw, mStacks);
++        pw.println("---Stacks---");
++    }
++
++    private void dumpStack(PrintWriter pw, ArrayList<ActivityStack> stacks) {
++        pw.println("size=" + stacks.size());
++        for (ActivityStack stack : stacks) {
++            pw.println(stack);
++            for (TaskRecord task : stack.getAllTasks()) {
++                pw.println("    " + task);
++                for (ActivityRecord activity : task.mActivities) {
++                    pw.println("        " + activity + ":" + activity.state);
++                }
++            }
++        }
++    }
++
+ }
+diff --git a/services/java/com/android/server/am/TaskRecord.java b/services/java/com/android/server/am/TaskRecord.java
+index 3d568ff..0a4581e 100644
+--- a/services/java/com/android/server/am/TaskRecord.java
++++ b/services/java/com/android/server/am/TaskRecord.java
+@@ -353,6 +353,10 @@ final class TaskRecord extends ThumbnailHolder {
+         return mTaskType == ActivityRecord.APPLICATION_ACTIVITY_TYPE;
+     }
+ 
++    boolean isMultiWindowTask() {
++        return mTaskType == ActivityRecord.MULTIWINDOW_ACTIVITY_TYPE;
++    }
++
+     public TaskAccessInfo getTaskAccessInfoLocked(boolean inclThumbs) {
+         final TaskAccessInfo thumbs = new TaskAccessInfo();
+         // How many different sub-thumbnails?
+@@ -487,6 +491,8 @@ final class TaskRecord extends ThumbnailHolder {
+             sb.append(userId);
+             sb.append(" sz=");
+             sb.append(mActivities.size());
++            sb.append(" stack=");
++            sb.append(stack != null ? stack.mStackId : -1);
+             sb.append('}');
+             return sb.toString();
+         }
+@@ -509,4 +515,21 @@ final class TaskRecord extends ThumbnailHolder {
+         stringName = sb.toString();
+         return toString();
+     }
++
++    void setAppType(boolean app) {
++        int type;
++        if (mTaskType == ActivityRecord.HOME_ACTIVITY_TYPE ||
++            mTaskType == ActivityRecord.RECENTS_ACTIVITY_TYPE)
++            return;
++        if(app)
++            type = ActivityRecord.APPLICATION_ACTIVITY_TYPE;
++        else
++            type = ActivityRecord.MULTIWINDOW_ACTIVITY_TYPE;
++        if (mTaskType != type) {
++            mTaskType = type;
++            for (int i =0; i < mActivities.size(); i++) {
++                mActivities.get(i).mActivityType = mTaskType;
++            }
++        }
++    }
+ }
+diff --git a/services/java/com/android/server/wm/DimLayer.java b/services/java/com/android/server/wm/DimLayer.java
+index c189ddd..8c05f46 100644
+--- a/services/java/com/android/server/wm/DimLayer.java
++++ b/services/java/com/android/server/wm/DimLayer.java
+@@ -126,7 +126,12 @@ public class DimLayer {
+     }
+ 
+     void setBounds(Rect bounds) {
++        if (DEBUG) Slog.v(TAG, "setBounds =" + bounds);
+         mBounds.set(bounds);
++//dingej1 2014,3,20 begin. BLADEFHD-3349. DimLayer redraw when the bounds is changed and showing.
++        if (!mLastBounds.equals(mBounds) && mShowing)
++            show(mLayer, mTargetAlpha, 0);
++//dingej1 end.
+     }
+ 
+     /**
+@@ -170,7 +175,9 @@ public class DimLayer {
+             dw = mBounds.width();
+             dh = mBounds.height();
+             xPos = mBounds.left;
+-            yPos = mBounds.right;
++//dingej1 2014,3,20 begin. BLADEFHD-3349. DimLayer show wrong place.
++            yPos = mBounds.top;
++//dingej1 end.
+         } else {
+             // Set surface size to screen size.
+             final DisplayInfo info = mDisplayContent.getDisplayInfo();
+diff --git a/services/java/com/android/server/wm/DisplayContent.java b/services/java/com/android/server/wm/DisplayContent.java
+index d358b4c..939482e 100644
+--- a/services/java/com/android/server/wm/DisplayContent.java
++++ b/services/java/com/android/server/wm/DisplayContent.java
+@@ -156,6 +156,9 @@ class DisplayContent {
+     }
+ 
+     boolean homeOnTop() {
++//dingej1 2014,2,19 BLADEFHD-2572. When there is only one StackBox,the home is top.
++        if (mStackBoxes.size() == 1) return true;
++//dingej1 end.
+         return mStackBoxes.get(0).mStack != mHomeStack;
+     }
+ 
+@@ -520,4 +523,5 @@ class DisplayContent {
+         }
+         pw.println();
+     }
++
+ }
+diff --git a/services/java/com/android/server/wm/FocusedStackFrame.java b/services/java/com/android/server/wm/FocusedStackFrame.java
+index cc48b86..e829eb6 100644
+--- a/services/java/com/android/server/wm/FocusedStackFrame.java
++++ b/services/java/com/android/server/wm/FocusedStackFrame.java
+@@ -21,7 +21,10 @@ import static com.android.server.wm.WindowManagerService.DEBUG_SURFACE_TRACE;
+ 
+ import android.graphics.Canvas;
+ import android.graphics.Color;
++import android.graphics.Paint;
+ import android.graphics.PixelFormat;
++import android.graphics.PorterDuff.Mode;  
++import android.graphics.PorterDuffXfermode;
+ import android.graphics.Rect;
+ import android.graphics.Region;
+ import android.util.Slog;
+@@ -35,8 +38,8 @@ import com.android.server.wm.WindowStateAnimator.SurfaceTrace;
+ 
+ class FocusedStackFrame {
+     private static final String TAG = "FocusedStackFrame";
+-    private static final int THICKNESS = 10;
+-    private static final float ALPHA = 0.3f;
++    private static final int THICKNESS = 6;
++    private static final float ALPHA = 0.6f;
+ 
+     private final SurfaceControl mSurfaceControl;
+     private final Surface mSurface = new Surface();
+@@ -46,13 +49,15 @@ class FocusedStackFrame {
+ 
+     public FocusedStackFrame(Display display, SurfaceSession session) {
+         SurfaceControl ctrl = null;
++        int max = (display.getWidth()>display.getHeight())?display.getWidth():display.getHeight();
+         try {
+             if (DEBUG_SURFACE_TRACE) {
+                 ctrl = new SurfaceTrace(session, "FocusedStackFrame",
+-                    1, 1, PixelFormat.TRANSLUCENT, SurfaceControl.HIDDEN);
++                        max, max, PixelFormat.TRANSLUCENT, SurfaceControl.HIDDEN);
+             } else {
+                 ctrl = new SurfaceControl(session, "FocusedStackFrame",
+-                    1, 1, PixelFormat.TRANSLUCENT, SurfaceControl.HIDDEN);
++                        max, max, PixelFormat.TRANSLUCENT, SurfaceControl.HIDDEN);
++                
+             }
+             ctrl.setLayerStack(display.getLayerStack());
+             ctrl.setAlpha(ALPHA);
+@@ -65,36 +70,51 @@ class FocusedStackFrame {
+     private void draw(Rect bounds, int color) {
+         if (false && DEBUG_STACK) Slog.i(TAG, "draw: bounds=" + bounds.toShortString() +
+                 " color=" + Integer.toHexString(color));
+-        mTmpDrawRect.set(bounds);
++        //mTmpDrawRect.set(bounds);
+         Canvas c = null;
+         try {
+-            c = mSurface.lockCanvas(mTmpDrawRect);
++            c = mSurface.lockCanvas(null);
+         } catch (IllegalArgumentException e) {
+         } catch (Surface.OutOfResourcesException e) {
+         }
+         if (c == null) {
+             return;
+         }
+-
+-        final int w = bounds.width();
+-        final int h = bounds.height();
+-
+-        // Top
+-        mTmpDrawRect.set(0, 0, w, THICKNESS);
+-        c.clipRect(mTmpDrawRect, Region.Op.REPLACE);
+-        c.drawColor(color);
+-        // Left (not including Top or Bottom stripe).
+-        mTmpDrawRect.set(0, THICKNESS, THICKNESS, h - THICKNESS);
+-        c.clipRect(mTmpDrawRect, Region.Op.REPLACE);
+-        c.drawColor(color);
+-        // Right (not including Top or Bottom stripe).
+-        mTmpDrawRect.set(w - THICKNESS, THICKNESS, w, h - THICKNESS);
+-        c.clipRect(mTmpDrawRect, Region.Op.REPLACE);
+-        c.drawColor(color);
+-        // Bottom
+-        mTmpDrawRect.set(0, h - THICKNESS, w, h);
+-        c.clipRect(mTmpDrawRect, Region.Op.REPLACE);
+-        c.drawColor(color);
++        
++        Paint p = new Paint();
++        p.setXfermode(new PorterDuffXfermode(Mode.CLEAR));
++        
++        c.drawRect(new Rect(0,0,c.getWidth(),c.getHeight()), p); 
++        
++//        final int w = bounds.width();
++//        final int h = bounds.height();
++		
++		p.setXfermode(new PorterDuffXfermode(Mode.SRC)); 
++		// smooths
++		p.setAntiAlias(true);
++		p.setColor(Color.rgb(57, 187, 224));
++		p.setStyle(Paint.Style.STROKE); 
++		p.setStrokeWidth(THICKNESS);
++//drawRect (float left, float top, float right, float bottom, Paint paint) 
++                mTmpDrawRect.set(bounds.left+THICKNESS/2,bounds.top+THICKNESS/2,bounds.right-THICKNESS/2,bounds.bottom-THICKNESS/2);
++		c.drawRect(mTmpDrawRect, p);
++		mLastBounds.set(mBounds);
++//        // Top
++//        mTmpDrawRect.set(0, 0, w, THICKNESS);
++//        c.clipRect(mTmpDrawRect, Region.Op.REPLACE);
++//        c.drawColor(color);
++//        // Left (not including Top or Bottom stripe).
++//        mTmpDrawRect.set(0, THICKNESS, THICKNESS, h - THICKNESS);
++//        c.clipRect(mTmpDrawRect, Region.Op.REPLACE);
++//        c.drawColor(color);
++//        // Right (not including Top or Bottom stripe).
++//        mTmpDrawRect.set(w - THICKNESS, THICKNESS, w, h - THICKNESS);
++//        c.clipRect(mTmpDrawRect, Region.Op.REPLACE);
++//        c.drawColor(color);
++//        // Bottom
++//        mTmpDrawRect.set(0, h - THICKNESS, w, h);
++//        c.clipRect(mTmpDrawRect, Region.Op.REPLACE);
++//        c.drawColor(color);
+ 
+         mSurface.unlockCanvasAndPost(c);
+     }
+@@ -115,16 +135,17 @@ class FocusedStackFrame {
+             return;
+         }
+         if (on) {
+-            if (!mLastBounds.equals(mBounds)) {
+-                // Erase the previous rectangle.
+-                positionSurface(mLastBounds);
+-                draw(mLastBounds, Color.TRANSPARENT);
+-                // Draw the latest rectangle.
+-                positionSurface(mBounds);
+-                draw(mBounds, Color.WHITE);
+-                // Update the history.
+-                mLastBounds.set(mBounds);
+-            }
++//            if (!mLastBounds.equals(mBounds)) {
++//                // Erase the previous rectangle.
++//                positionSurface(mLastBounds);
++//                draw(mLastBounds, Color.TRANSPARENT);
++//                // Draw the latest rectangle.
++//                positionSurface(mBounds);
++//                draw(mBounds, Color.RED);
++//                // Update the history.
++//                mLastBounds.set(mBounds);
++//            }
++            draw(mBounds, Color.RED);
+             mSurfaceControl.show();
+         } else {
+             mSurfaceControl.hide();
+diff --git a/services/java/com/android/server/wm/StackBox.java b/services/java/com/android/server/wm/StackBox.java
+index d351925..d8bde22 100644
+--- a/services/java/com/android/server/wm/StackBox.java
++++ b/services/java/com/android/server/wm/StackBox.java
+@@ -18,6 +18,7 @@ package com.android.server.wm;
+ 
+ import android.graphics.Rect;
+ import android.util.Slog;
++import android.view.Surface;
+ 
+ import static com.android.server.am.ActivityStackSupervisor.HOME_STACK_ID;
+ import static com.android.server.wm.WindowManagerService.DEBUG_STACK;
+@@ -43,6 +44,9 @@ public class StackBox {
+     /** Used with {@link WindowManagerService#createStack}. Put on a lower layer on display. */
+     public static final int TASK_STACK_GOES_UNDER = 7;
+ 
++    /*Lenovo sw, xieqiong2 2014.1.23 add BLADEFHD-283*/
++    public static final int SPLIT_SPACE = 8;
++
+     static int sCurrentBoxId = 0;
+ 
+     /** Unique id for this box */
+@@ -110,7 +114,7 @@ public class StackBox {
+      */
+     boolean contains(int stackBoxId) {
+         return mStackBoxId == stackBoxId ||
+-                (mStack == null &&  (mFirst.contains(stackBoxId) || mSecond.contains(stackBoxId)));
++                (mStack == null &&  ((mFirst!=null && mFirst.contains(stackBoxId)) || (mSecond!=null && mSecond.contains(stackBoxId))));
+     }
+ 
+     /**
+@@ -126,11 +130,20 @@ public class StackBox {
+         if (mStack != null) {
+             return mStack.mStackId;
+         }
+-        int stackId = mFirst.stackIdFromPoint(x, y);
+-        if (stackId >= 0) {
+-            return stackId;
++        int stackId =0;
++        if (mFirst!=null){
++        	stackId = mFirst.stackIdFromPoint(x, y);
++	        if (stackId >= 0) {
++	            return stackId;
++	        }
+         }
+-        return mSecond.stackIdFromPoint(x, y);
++        if (mSecond!=null){
++        	stackId = mSecond.stackIdFromPoint(x, y);
++	        if (stackId >= 0) {
++	            return stackId;
++	        }
++        }        
++        return -1;
+     }
+ 
+     /** Determine if this StackBox is the first child or second child.
+@@ -148,11 +161,22 @@ public class StackBox {
+         if (mStack != null) {
+             return mStack.mStackId == stackId ? new Rect(mBounds) : null;
+         }
+-        Rect bounds = mFirst.getStackBounds(stackId);
+-        if (bounds != null) {
+-            return bounds;
++        Rect bounds = null;
++        if (mFirst!=null){
++	        bounds = mFirst.getStackBounds(stackId);
++	        if (bounds != null) {
++	            return bounds;
++	        }
++        }
++        
++        if (mSecond!=null){
++        	bounds = mSecond.getStackBounds(stackId);
++	        if (bounds != null) {
++	            return bounds;
++	        }        	
+         }
+-        return mSecond.getStackBounds(stackId);
++        
++        return new Rect(0,0,0,0);
+     }
+ 
+     /**
+@@ -172,11 +196,20 @@ public class StackBox {
+                 return null;
+             }
+             // Propagate the split to see if the targeted StackBox is in either sub box.
+-            TaskStack stack = mFirst.split(stackId, relativeStackBoxId, position, weight);
+-            if (stack != null) {
+-                return stack;
++            TaskStack stack=null;
++            if (mFirst!=null){
++	            stack = mFirst.split(stackId, relativeStackBoxId, position, weight);
++	            if (stack != null) {
++	                return stack;
++	            }
+             }
+-            return mSecond.split(stackId, relativeStackBoxId, position, weight);
++            if (mSecond!=null){
++	            stack = mSecond.split(stackId, relativeStackBoxId, position, weight);
++	            if (stack != null) {
++	                return stack;
++	            }
++            }            
++            return null;
+         }
+ 
+         // Found it!
+@@ -221,13 +254,16 @@ public class StackBox {
+         }
+ 
+         mFirst = new StackBox(mService, mDisplayContent, this);
+-        firstStack.mStackBox = mFirst;
+-        mFirst.mStack = firstStack;
++        if (mFirst!=null){
++            firstStack.mStackBox = mFirst;
++            mFirst.mStack = firstStack;
++        }
+ 
+         mSecond = new StackBox(mService, mDisplayContent, this);
+-        secondStack.mStackBox = mSecond;
+-        mSecond.mStack = secondStack;
+-
++        if (mSecond!=null){
++            secondStack.mStackBox = mSecond;
++            mSecond.mStack = secondStack;
++        }
+         mStack = null;
+         return stack;
+     }
+@@ -237,7 +273,10 @@ public class StackBox {
+         if (mStack != null) {
+             return mStack.mStackId;
+         }
+-        return mFirst.getStackId();
++        if (mFirst!=null){
++        	return mFirst.getStackId();
++        }
++        return 0;
+     }
+ 
+     /** Remove this box and propagate its sibling's content up to their parent.
+@@ -259,7 +298,10 @@ public class StackBox {
+             // mParent is a top-plane stack. Now sibling will be.
+             if (DEBUG_STACK) Slog.i(TAG, "StackBox.remove: grandparent null");
+             mDisplayContent.removeStackBox(mParent);
+-            mDisplayContent.addStackBox(sibling, true);
++            sibling.mVertical=!sibling.mVertical;
++//dingej1 2014,2,19 BLADEFHD-2572 do not add Top when HomeStack is top.
++            mDisplayContent.addStackBox(sibling, !mDisplayContent.homeOnTop());
++//dingej1 end.
+         } else {
+             if (DEBUG_STACK) Slog.i(TAG, "StackBox.remove: grandparent getting sibling");
+             if (mParent.isFirstChild()) {
+@@ -274,7 +316,7 @@ public class StackBox {
+     boolean resize(int stackBoxId, float weight) {
+         if (mStackBoxId != stackBoxId) {
+             return mStack == null &&
+-                    (mFirst.resize(stackBoxId, weight) || mSecond.resize(stackBoxId, weight));
++                    (mFirst!=null && mFirst.resize(stackBoxId, weight)) || (mSecond!=null && mSecond.resize(stackBoxId, weight));
+         }
+         // Don't change weight on topmost stack.
+         if (mParent != null) {
+@@ -283,6 +325,33 @@ public class StackBox {
+         return true;
+     }
+ 
++    boolean isPortal(){
++    	int rot = mService.getRotation();
++        if (mDisplayContent.mInitialDisplayWidth < mDisplayContent.mInitialDisplayHeight) {
++            // On devices with a natural orientation of portrait
++            switch (rot) {
++                default:
++                case Surface.ROTATION_0:
++                case Surface.ROTATION_180:
++                    return true;
++                case Surface.ROTATION_90:
++                case Surface.ROTATION_270:
++                	return false;
++            }
++        }else {
++	        // On devices with a natural orientation of landscape
++	        switch (rot) {
++		        default:
++		        case Surface.ROTATION_0:
++		        case Surface.ROTATION_180:
++		            return false;
++		        case Surface.ROTATION_90:
++		        case Surface.ROTATION_270:
++		        	return true;
++		    }
++        }
++    }
++    
+     /** If this is a terminal StackBox (contains a TaskStack) set the bounds.
+      * @param bounds The rectangle to set the bounds to.
+      * @param underStatusBar True if the StackBox is directly below the Status Bar.
+@@ -295,27 +364,35 @@ public class StackBox {
+         }
+         if (mStack != null) {
+             change |= !mBounds.equals(bounds);
+-            if (change) {
++            //if (change) { //there is a bug in aosp code which causes 2nd taskstack issue
++            if (true) {
+                 mBounds.set(bounds);
+                 mStack.setBounds(bounds, underStatusBar);
+             }
+         } else {
++            mBounds.set(bounds);
+             mTmpRect.set(bounds);
+-            if (mVertical) {
++            if (!(isPortal() ^ mVertical)) {
+                 final int height = bounds.height();
+                 int firstHeight = (int)(height * mWeight);
+-                mTmpRect.bottom = bounds.top + firstHeight;
++                mTmpRect.bottom = bounds.top + firstHeight - SPLIT_SPACE/2;
++                if (mFirst!=null)
+                 change |= mFirst.setStackBoxSizes(mTmpRect, underStatusBar);
+-                mTmpRect.top = mTmpRect.bottom;
++                /*Lenovo sw, xieqiong2 2014.1.16 modify BLADEFHD-283*/
++                mTmpRect.top = mTmpRect.bottom + SPLIT_SPACE;
+                 mTmpRect.bottom = bounds.top + height;
++                if (mSecond!=null)
+                 change |= mSecond.setStackBoxSizes(mTmpRect, false);
+             } else {
+                 final int width = bounds.width();
+                 int firstWidth = (int)(width * mWeight);
+-                mTmpRect.right = bounds.left + firstWidth;
++                mTmpRect.right = bounds.left + firstWidth - SPLIT_SPACE/2+1;
++                if (mFirst!=null)
+                 change |= mFirst.setStackBoxSizes(mTmpRect, underStatusBar);
+-                mTmpRect.left = mTmpRect.right;
++                /*Lenovo sw, xieqiong2 2014.1.16 modify BLADEFHD-283*/
++                mTmpRect.left = mTmpRect.right + SPLIT_SPACE;
+                 mTmpRect.right = bounds.left + width;
++                if (mSecond!=null)
+                 change |= mSecond.setStackBoxSizes(mTmpRect, underStatusBar);
+             }
+         }
+@@ -327,7 +404,9 @@ public class StackBox {
+             mStack.resetAnimationBackgroundAnimator();
+             return;
+         }
++        if (mFirst!=null)
+         mFirst.resetAnimationBackgroundAnimator();
++        if (mSecond!=null)
+         mSecond.resetAnimationBackgroundAnimator();
+     }
+ 
+@@ -335,8 +414,13 @@ public class StackBox {
+         if (mStack != null) {
+             return mStack.animateDimLayers();
+         }
+-        boolean result = mFirst.animateDimLayers();
+-        result |= mSecond.animateDimLayers();
++        boolean result=false;
++        if (mFirst!=null){
++        	result = mFirst.animateDimLayers();
++        }
++        if (mSecond!=null){
++        	result |= mSecond.animateDimLayers();
++        }
+         return result;
+     }
+ 
+@@ -345,7 +429,9 @@ public class StackBox {
+             mStack.resetDimmingTag();
+             return;
+         }
++        if (mFirst!=null)
+         mFirst.resetDimming();
++        if (mSecond!=null)
+         mSecond.resetDimming();
+     }
+ 
+@@ -353,8 +439,13 @@ public class StackBox {
+         if (mStack != null) {
+             return mStack.isDimming();
+         }
+-        boolean result = mFirst.isDimming();
+-        result |= mSecond.isDimming();
++        boolean result=false;
++        if (mFirst!=null){
++        	result = mFirst.isDimming();
++        }
++        if (mSecond!=null){
++        	result |= mSecond.isDimming();
++        }
+         return result;
+     }
+ 
+@@ -363,7 +454,9 @@ public class StackBox {
+             mStack.stopDimmingIfNeeded();
+             return;
+         }
++        if (mFirst!=null)
+         mFirst.stopDimmingIfNeeded();
++        if (mSecond!=null)
+         mSecond.stopDimmingIfNeeded();
+     }
+ 
+@@ -372,7 +465,9 @@ public class StackBox {
+             mStack.switchUser(userId);
+             return;
+         }
++        if (mFirst!=null)
+         mFirst.switchUserStacks(userId);
++        if (mSecond!=null)
+         mSecond.switchUserStacks(userId);
+     }
+ 
+@@ -382,7 +477,9 @@ public class StackBox {
+             mStack.mAnimationBackgroundSurface.mDimSurface.destroy();
+             return;
+         }
++        if (mFirst!=null)
+         mFirst.close();
++        if (mSecond!=null)
+         mSecond.close();
+     }
+ 
+@@ -391,12 +488,12 @@ public class StackBox {
+         pw.print(prefix); pw.print("mBounds="); pw.print(mBounds.toShortString());
+             pw.print(" mVertical="); pw.print(mVertical);
+             pw.print(" layoutNeeded="); pw.println(layoutNeeded);
+-        if (mFirst != null) {
++        if (mFirst != null && mSecond!=null) {
+             pw.print(prefix); pw.print("mFirst="); pw.println(System.identityHashCode(mFirst));
+             mFirst.dump(prefix + "  ", pw);
+             pw.print(prefix); pw.print("mSecond="); pw.println(System.identityHashCode(mSecond));
+             mSecond.dump(prefix + "  ", pw);
+-        } else {
++        } else if (mStack != null){
+             pw.print(prefix); pw.print("mStack="); pw.println(mStack);
+             mStack.dump(prefix + "  ", pw);
+         }
+@@ -406,9 +503,12 @@ public class StackBox {
+     public String toString() {
+         if (mStack != null) {
+             return "Box{" + hashCode() + " stack=" + mStack.mStackId + "}";
+-        }
++        }else if (mFirst != null && mSecond!=null){
+         return "Box{" + hashCode() + " parent=" + System.identityHashCode(mParent)
+                 + " first=" + System.identityHashCode(mFirst)
+                 + " second=" + System.identityHashCode(mSecond) + "}";
++        }else {
++        	return "";
++        }
+     }
+ }
+diff --git a/services/java/com/android/server/wm/StackTapPointerEventListener.java b/services/java/com/android/server/wm/StackTapPointerEventListener.java
+index 19d8ab3..4831c67 100644
+--- a/services/java/com/android/server/wm/StackTapPointerEventListener.java
++++ b/services/java/com/android/server/wm/StackTapPointerEventListener.java
+@@ -16,6 +16,7 @@
+ 
+ package com.android.server.wm;
+ 
++import android.util.Slog;
+ import android.graphics.Region;
+ import android.view.DisplayInfo;
+ import android.view.MotionEvent;
+@@ -26,6 +27,8 @@ import com.android.server.wm.WindowManagerService.H;
+ public class StackTapPointerEventListener implements PointerEventListener {
+     private static final int TAP_TIMEOUT_MSEC = 300;
+     private static final float TAP_MOTION_SLOP_INCHES = 0.125f;
++    private static final String TAG = "StackTapPointerEventListener";
++    private static final boolean DEBUG = false;
+ 
+     private final int mMotionSlop;
+     private float mDownX;
+@@ -74,7 +77,8 @@ public class StackTapPointerEventListener implements PointerEventListener {
+                     if ((motionEvent.getEventTime() - motionEvent.getDownTime())
+                             < TAP_TIMEOUT_MSEC
+                             && (x - mDownX) < mMotionSlop && (y - mDownY) < mMotionSlop
+-                            && !mTouchExcludeRegion.contains(x, y)) {
++                            && !mTouchExcludeRegion.contains(x, y)
++                            && !inInputMethodUi(x, y)) {
+                         mService.mH.obtainMessage(H.TAP_OUTSIDE_STACK, x, y,
+                                 mDisplayContent).sendToTarget();
+                     }
+@@ -84,4 +88,15 @@ public class StackTapPointerEventListener implements PointerEventListener {
+             }
+         }
+     }
++
++    private boolean inInputMethodUi(int x, int y) {
++        WindowState state = this.mService.mInputMethodWindow;
++        if (state == null) {
++            return false;
++        }
++        Region region = new Region();
++        state.getTouchableRegion(region);
++        return region.contains(x, y);
++    }
++
+ }
+diff --git a/services/java/com/android/server/wm/TaskStack.java b/services/java/com/android/server/wm/TaskStack.java
+index cb29df4..46f501f 100644
+--- a/services/java/com/android/server/wm/TaskStack.java
++++ b/services/java/com/android/server/wm/TaskStack.java
+@@ -88,7 +88,7 @@ public class TaskStack {
+         return mStackId == HOME_STACK_ID;
+     }
+ 
+-    boolean hasSibling() {
++    public boolean hasSibling() {
+         return mStackBox.mParent != null;
+     }
+ 
+@@ -122,7 +122,11 @@ public class TaskStack {
+ 
+         task.mStack = this;
+         mDisplayContent.addTask(task, toTop);
+-        return mDisplayContent.moveHomeStackBox(mStackId == HOME_STACK_ID);
++//dingej1 2014,2,19 BLADEFHD-2572. Do not move HomeStack when task is not top.
++        if (toTop)
++            return mDisplayContent.moveHomeStackBox(mStackId == HOME_STACK_ID);
++        else return true;
++//dingej1 end.
+     }
+ 
+     boolean moveTaskToTop(Task task) {
+@@ -270,7 +274,9 @@ public class TaskStack {
+                 final ArrayList<WindowState> windows = activities.get(activityNdx).allAppWindows;
+                 for (int winNdx = windows.size() - 1; winNdx >= 0; --winNdx) {
+                     final WindowState win = windows.get(winNdx);
+-                    if (!resizingWindows.contains(win)) {
++//dingej1 2014,1,16 begin. BLADEFHD-1083 Background Window relayout/resized dead circle.
++                    if (win.mHasSurface && !resizingWindows.contains(win)) {
++//dingej1 end.
+                         if (WindowManagerService.DEBUG_RESIZE) Slog.d(TAG,
+                                 "setBounds: Resizing " + win);
+                         resizingWindows.add(win);
+diff --git a/services/java/com/android/server/wm/WindowManagerService.java b/services/java/com/android/server/wm/WindowManagerService.java
+index 351bf0f..dcc8c8a 100644
+--- a/services/java/com/android/server/wm/WindowManagerService.java
++++ b/services/java/com/android/server/wm/WindowManagerService.java
+@@ -303,6 +303,8 @@ public class WindowManagerService extends IWindowManager.Stub
+ 
+     private final boolean mHeadless;
+ 
++    private int mMultiWinNum = 0;
++
+     final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+         @Override
+         public void onReceive(Context context, Intent intent) {
+@@ -430,6 +432,7 @@ public class WindowManagerService extends IWindowManager.Stub
+     final float[] mTmpFloats = new float[9];
+     final Rect mTmpContentRect = new Rect();
+ 
++    public boolean mLockOutSideTouch = false;
+     boolean mDisplayReady;
+     boolean mSafeMode;
+     boolean mDisplayEnabled = false;
+@@ -608,7 +611,7 @@ public class WindowManagerService extends IWindowManager.Stub
+     final WindowAnimator mAnimator;
+ 
+     SparseArray<Task> mTaskIdToTask = new SparseArray<Task>();
+-    SparseArray<TaskStack> mStackIdToStack = new SparseArray<TaskStack>();
++    public SparseArray<TaskStack> mStackIdToStack = new SparseArray<TaskStack>();
+ 
+     private final PointerEventDispatcher mPointerEventDispatcher;
+ 
+@@ -1594,6 +1597,10 @@ public class WindowManagerService extends IWindowManager.Stub
+     static final int ADJUST_WALLPAPER_LAYERS_CHANGED = 1<<1;
+     static final int ADJUST_WALLPAPER_VISIBILITY_CHANGED = 1<<2;
+ 
++    private static final int EVENT_ADD_TASK_STACK = 1;
++    private static final int EVENT_REMOVE_TASK_STACK = 2;
++    private static final int EVENT_RESIZE_TASK_STACK = 3;
++
+     int adjustWallpaperWindowsLocked() {
+         mInnerFields.mWallpaperMayChange = false;
+         boolean targetChanged = false;
+@@ -3489,8 +3496,9 @@ public class WindowManagerService extends IWindowManager.Stub
+             Task newTask = mTaskIdToTask.get(groupId);
+             if (newTask == null) {
+                 newTask = createTask(groupId, oldTask.mStack.mStackId, oldTask.mUserId, atoken);
++            } else {
++                newTask.mAppTokens.add(atoken);
+             }
+-            newTask.mAppTokens.add(atoken);
+         }
+     }
+ 
+@@ -3771,26 +3779,104 @@ public class WindowManagerService extends IWindowManager.Stub
+         mFocusedStackFrame.setLayer(mFocusedStackLayer);
+     }
+ 
+-    void setFocusedStackFrame() {
++    /*Lenovo sw begin, xieqiong2 modify 2014.2.18 for BLADEFHD-2291 */
++    int num = 0;
++    void visitStackBoxes(StackBoxInfo stackBoxInfoNode) {
++        if (stackBoxInfoNode != null) {
++            if (stackBoxInfoNode.children != null) {
++                visitStackBoxes(stackBoxInfoNode.children[0]);
++                visitStackBoxes(stackBoxInfoNode.children[1]);
++            } else {
++                // target reached, do something
++                num++;
++            }
++        }
++    }
++    /*Lenovo sw end, xieqiong2 modify 2014.2.18 for BLADEFHD-2291 */
++/*Begin,Lenovo-sw wangfan3 add 2014-01-07, add for SystemUI about MultiWindow */
++    void setSplitterFrame() {
+         final TaskStack stack;
+-        if (mFocusedApp != null) {
+-            Task task = mTaskIdToTask.get(mFocusedApp.groupId);
+-            stack = task.mStack;
+-            task.getDisplayContent().setTouchExcludeRegion(stack);
++         /*Lenovo sw begin, xieqiong2 modify 2014.2.18 for BLADEFHD-2291 */
++            List<StackBoxInfo> stackboxInfos = getStackBoxInfos();
++            StackBoxInfo appStackBoxInfo = null;
++            if (stackboxInfos.size() > 1) {
++                for (StackBoxInfo stackBoxInfo : stackboxInfos) {
++                    if (stackBoxInfo.stackId != HOME_STACK_ID) {
++                        appStackBoxInfo = stackBoxInfo;
++                        //break; // we may need to consider multiple user later
++                        // instead of break
++                    }
++                }
++            }
++            num = 0;
++            visitStackBoxes(appStackBoxInfo);
++        boolean sibling = false;
++        if (mCurrentFocus != null) {
++            stack = mCurrentFocus.getStack();
++            if (stack!=null) {
++                sibling = stack.isHomeStack()==false && stack.hasSibling()==true;
++            }
++        }
++        if (sibling) {
++            mPolicy.showSplitterWindow(true, (num != mMultiWinNum));
+         } else {
+-            stack = null;
++            mPolicy.showSplitterWindow(false, (num != mMultiWinNum));
+         }
++        mMultiWinNum = num;
++        /*Lenovo sw end, xieqiong2 modify 2014.2.18 for BLADEFHD-2291 */
++        // more aggressive fresh way for focusframe
++        mH.removeMessages(H.REPORT_FOCUSFRAME_CHANGE);
++        mH.sendEmptyMessage(H.REPORT_FOCUSFRAME_CHANGE);
++    }
++    public void setLockFocusSwitch(boolean bLock) {
++        mLockOutSideTouch=bLock;
++        return;
++    }
++/*End,Lenovo-sw wangfan3 add 2014-01-07, add for SystemUI about MultiWindow */
++
++    public void showSplitterWindow(boolean enable, int userId) {
++        mPolicy.showSplitterWindow(enable, userId);
++    }
++
++    void setFocusedStackFrame() {
++//        final TaskStack stack;
++//        if (mFocusedApp != null) {
++//            Task task = mTaskIdToTask.get(mFocusedApp.groupId);
++//            stack = task.mStack;
++//            task.getDisplayContent().setTouchExcludeRegion(stack);
++//        } else {
++//            stack = null;
++//        }
+         if (SHOW_LIGHT_TRANSACTIONS) Slog.i(TAG, ">>> OPEN TRANSACTION setFocusedStackFrame");
+         SurfaceControl.openTransaction();
+         try {
+-            if (stack == null) {
+-                mFocusedStackFrame.setVisibility(false);
++            
++//            if (stack == null) {
++//                mFocusedStackFrame.setVisibility(false);
++//            } else {
++//                final StackBox box = stack.mStackBox;
++//                final Rect bounds = box.mBounds;
++//                final boolean multipleStacks = box.mParent != null;
++//                mFocusedStackFrame.setBounds(bounds);
++//                mFocusedStackFrame.setVisibility(multipleStacks);
++//            }
++
++            boolean sibling = false;
++            TaskStack stack;
++            Rect newBound = null;
++            if (mCurrentFocus != null) {
++                stack = mCurrentFocus.getStack();
++                if (stack!=null) {
++                    sibling = stack.isHomeStack()==false && stack.hasSibling()==true;
++                    if (stack.mStackBox!=null) newBound = stack.mStackBox.mBounds;
++                }
++            }
++            if (sibling && newBound!=null) {
++                setFocusedStackLayer();
++                mFocusedStackFrame.setBounds(newBound);
++                mFocusedStackFrame.setVisibility(true);
+             } else {
+-                final StackBox box = stack.mStackBox;
+-                final Rect bounds = box.mBounds;
+-                final boolean multipleStacks = box.mParent != null;
+-                mFocusedStackFrame.setBounds(bounds);
+-                mFocusedStackFrame.setVisibility(multipleStacks);
++                mFocusedStackFrame.setVisibility(false);
+             }
+         } finally {
+             SurfaceControl.closeTransaction();
+@@ -4827,6 +4913,14 @@ public class WindowManagerService extends IWindowManager.Stub
+         }
+     }
+ 
++    public void moveStackWindow(int stackId) {
++        TaskStack stack = this.mStackIdToStack.get(stackId);
++        if (stack == null) {
++            return;
++        }
++        moveStackWindowsLocked(stack.getDisplayContent());
++    }
++
+     /**
+      * Create a new TaskStack and place it next to an existing stack.
+      * @param stackId The unique identifier of the new stack.
+@@ -4856,6 +4950,7 @@ public class WindowManagerService extends IWindowManager.Stub
+                 if (stack != null) {
+                     mStackIdToStack.put(stackId, stack);
+                     performLayoutAndPlaceSurfacesLocked();
++                    broadcastTaskStackChangeEvent(EVENT_ADD_TASK_STACK);
+                     return;
+                 }
+             }
+@@ -4863,14 +4958,25 @@ public class WindowManagerService extends IWindowManager.Stub
+         }
+     }
+ 
+-    public int removeStack(int stackId) {
++    private void broadcastTaskStackChangeEvent(int event) {
++        if (this.mBootCompleted) {
++            Intent intent = new Intent("com.lenovo.android.intent.TASK_STACK_CHANGE");
++            intent.putExtra("event", event);
++            mContext.sendBroadcast(intent);
++        } else {
++        }
++    }
++
++    public int removeStack(int stackId, boolean bReconfigurationNeeded) {
+         synchronized (mWindowMap) {
+             final TaskStack stack = mStackIdToStack.get(stackId);
+             if (stack != null) {
+                 mStackIdToStack.delete(stackId);
+                 int nextStackId = stack.remove();
+                 stack.getDisplayContent().layoutNeeded = true;
+-                requestTraversalLocked();
++                if (bReconfigurationNeeded) {
++                    reconfigurationNeedExecution();
++                }
+                 return nextStackId;
+             }
+             if (DEBUG_STACK) Slog.i(TAG, "removeStack: could not find stackId=" + stackId);
+@@ -4878,6 +4984,15 @@ public class WindowManagerService extends IWindowManager.Stub
+         return HOME_STACK_ID;
+     }
+ 
++    public void reconfigurationNeedExecution(){
++        requestTraversalLocked();
++        broadcastTaskStackChangeEvent(EVENT_REMOVE_TASK_STACK);
++    }
++
++    public int removeStack(int stackId) {
++        return removeStack(stackId, true);
++    }
++
+     public void removeTask(int taskId) {
+         synchronized (mWindowMap) {
+             Task task = mTaskIdToTask.get(taskId);
+@@ -4892,20 +5007,33 @@ public class WindowManagerService extends IWindowManager.Stub
+         }
+     }
+ 
+-    public void addTask(int taskId, int stackId, boolean toTop) {
++    public void addTask(int taskId, int stackId, boolean toTop, boolean bLayoutNeeded) {
+         synchronized (mWindowMap) {
+             Task task = mTaskIdToTask.get(taskId);
+             if (task == null) {
+                 return;
+             }
+             TaskStack stack = mStackIdToStack.get(stackId);
++            if (stack == null) {
++                return;
++            }
+             stack.addTask(task, toTop);
+             final DisplayContent displayContent = stack.getDisplayContent();
+             displayContent.layoutNeeded = true;
+-            performLayoutAndPlaceSurfacesLocked();
++            if (bLayoutNeeded) {
++                layoutNeedExecution();
++            }
+         }
+     }
+ 
++    public void layoutNeedExecution(){
++        performLayoutAndPlaceSurfacesLocked();
++    }
++
++    public void addTask(int taskId, int stackId, boolean toTop) {
++        addTask(taskId, stackId, toTop, true);
++    }
++
+     public void resizeStackBox(int stackBoxId, float weight) {
+         if (weight < STACK_WEIGHT_MIN || weight > STACK_WEIGHT_MAX) {
+             throw new IllegalArgumentException(
+@@ -4917,6 +5045,7 @@ public class WindowManagerService extends IWindowManager.Stub
+             for (int displayNdx = 0; displayNdx < numDisplays; ++displayNdx) {
+                 if (mDisplayContents.valueAt(displayNdx).resizeStack(stackBoxId, weight)) {
+                     performLayoutAndPlaceSurfacesLocked();
++                    broadcastTaskStackChangeEvent(EVENT_RESIZE_TASK_STACK);
+                     return;
+                 }
+             }
+@@ -6902,6 +7031,8 @@ public class WindowManagerService extends IWindowManager.Stub
+     final InputMonitor mInputMonitor = new InputMonitor(this);
+     private boolean mEventDispatchingEnabled;
+ 
++    private boolean mBootCompleted;
++
+     @Override
+     public void pauseKeyDispatching(IBinder _token) {
+         if (!checkCallingPermission(android.Manifest.permission.MANAGE_APP_TOKENS,
+@@ -7062,6 +7193,19 @@ public class WindowManagerService extends IWindowManager.Stub
+ 
+     public void systemReady() {
+         mPolicy.systemReady();
++        registerReceiver();
++    }
++
++    private void registerReceiver() {
++        IntentFilter filter = new IntentFilter();
++        filter.addAction(Intent.ACTION_BOOT_COMPLETED);
++        mContext.registerReceiver(new BroadcastReceiver() {
++            @Override
++            public void onReceive(Context context, Intent intent) {
++                mBootCompleted = true;
++                mContext.unregisterReceiver(this);
++            }
++        }, filter);
+     }
+ 
+     // TODO(multidisplay): Call isScreenOn for each display.
+@@ -7120,7 +7264,8 @@ public class WindowManagerService extends IWindowManager.Stub
+         public static final int NOTIFY_ACTIVITY_DRAWN = 32;
+ 
+         public static final int REMOVE_STARTING_TIMEOUT = 33;
+-
++		public static final int REPORT_SPLITBAR_CHANGE = 34;
++        public static final int REPORT_FOCUSFRAME_CHANGE = 35;
+         @Override
+         public void handleMessage(Message msg) {
+             if (DEBUG_WINDOW_TRACE) {
+@@ -7547,12 +7692,24 @@ public class WindowManagerService extends IWindowManager.Stub
+ 
+                 case TAP_OUTSIDE_STACK: {
+                     int stackId;
++                    if (mLockOutSideTouch==true){ // do not switch focus when center point is touched
++                        mLockOutSideTouch = false;
++                        return;
++                    }
+                     synchronized (mWindowMap) {
+                         stackId = ((DisplayContent)msg.obj).stackIdFromPoint(msg.arg1, msg.arg2);
+                     }
+                     if (stackId >= 0) {
+                         try {
+-                            mActivityManager.setFocusedStack(stackId);
++                            if (mCurrentFocus!=null){
++                                String focusPkg = mCurrentFocus.getOwningPackage();
++                                if (focusPkg.equals("com.android.systemui")){ //add more like android,statusbar if further issue happens
++                                    if (DEBUG_FOCUS) Slog.w("cire:", "Drop touch event as it is not an app! pkg = " + focusPkg);
++                                    return;
++                                }
++                                mActivityManager.setFocusedStack(stackId);
++                                setFocusedStackFrame();
++                            }
+                         } catch (RemoteException e) {
+                         }
+                     }
+@@ -7564,6 +7721,12 @@ public class WindowManagerService extends IWindowManager.Stub
+                     } catch (RemoteException e) {
+                     }
+                     break;
++                case REPORT_SPLITBAR_CHANGE:
++                    setSplitterFrame();
++                    break;
++                case REPORT_FOCUSFRAME_CHANGE:
++                    setFocusedStackFrame();
++                    break;
+             }
+             if (DEBUG_WINDOW_TRACE) {
+                 Slog.v(TAG, "handleMessage: exit");
+@@ -8405,7 +8568,8 @@ public class WindowManagerService extends IWindowManager.Stub
+         if (updateInputWindows) {
+             mInputMonitor.updateInputWindowsLw(false /*force*/);
+         }
+-
++        mH.removeMessages(H.REPORT_SPLITBAR_CHANGE);
++        mH.sendEmptyMessageDelayed(H.REPORT_SPLITBAR_CHANGE, 50);
+         mPolicy.finishLayoutLw();
+     }
+ 
+@@ -9504,8 +9668,6 @@ public class WindowManagerService extends IWindowManager.Stub
+             }
+         }
+ 
+-        setFocusedStackFrame();
+-
+         // Check to see if we are now in a state where the screen should
+         // be enabled, because the window obscured flags have changed.
+         enableScreenIfNeededLocked();
+@@ -9866,6 +10028,24 @@ public class WindowManagerService extends IWindowManager.Stub
+         return null;
+     }
+ 
++    private boolean isTokenInStackId(AppWindowToken wtoken, int stackId){
++        final TaskStack stack = mStackIdToStack.get(stackId);
++        if (stack != null){
++            ArrayList<Task> tasks = stack.getTasks();
++            for (int taskNdx = tasks.size() - 1; taskNdx >= 0; --taskNdx) {
++                AppTokenList tokens = tasks.get(taskNdx).mAppTokens;
++                int tokenNdx = tokens.size() - 1;
++                for ( ; tokenNdx >= 0; --tokenNdx) {
++                    final AppWindowToken token = tokens.get(tokenNdx);
++                    if (wtoken == token) {
++                        return true;
++                    }
++                }
++            }
++        }
++        return false;
++    }
++
+     private WindowState findFocusedWindowLocked(DisplayContent displayContent) {
+         final WindowList windows = displayContent.getWindowList();
+         for (int i = windows.size() - 1; i >= 0; i--) {
+@@ -9894,26 +10074,41 @@ public class WindowManagerService extends IWindowManager.Stub
+             // win.mAppToken (return win) or mFocusedApp (return null).
+             if (wtoken != null && win.mAttrs.type != TYPE_APPLICATION_STARTING &&
+                     mFocusedApp != null) {
+-                ArrayList<Task> tasks = displayContent.getTasks();
+-                for (int taskNdx = tasks.size() - 1; taskNdx >= 0; --taskNdx) {
+-                    AppTokenList tokens = tasks.get(taskNdx).mAppTokens;
+-                    int tokenNdx = tokens.size() - 1;
+-                    for ( ; tokenNdx >= 0; --tokenNdx) {
+-                        final AppWindowToken token = tokens.get(tokenNdx);
+-                        if (wtoken == token) {
+-                            break;
+-                        }
+-                        if (mFocusedApp == token) {
+-                            // Whoops, we are below the focused app...  no focus for you!
+-                            if (localLOGV || DEBUG_FOCUS_LIGHT) Slog.v(TAG,
+-                                    "findFocusedWindow: Reached focused app=" + mFocusedApp);
+-                            return null;
+-                        }
+-                    }
+-                    if (tokenNdx >= 0) {
+-                        // Early exit from loop, must have found the matching token.
+-                        break;
+-                    }
++                try{
++                    int stackId = mActivityManager.getFocusedStack2();
++                    if (stackId>=0 && stackId != HOME_STACK_ID &&
++                        mStackIdToStack.get(stackId)!=null &&
++                        mStackIdToStack.get(stackId).hasSibling()){
++                    if (isTokenInStackId(wtoken,stackId)==true){
++                            return win;
++                        }else{
++                            continue;
++                         }
++                    }else{
++                        ArrayList<Task> tasks = displayContent.getTasks();
++                        for (int taskNdx = tasks.size() - 1; taskNdx >= 0; --taskNdx) {
++                            AppTokenList tokens = tasks.get(taskNdx).mAppTokens;
++                            int tokenNdx = tokens.size() - 1;
++                            for ( ; tokenNdx >= 0; --tokenNdx) {
++                                final AppWindowToken token = tokens.get(tokenNdx);
++                                if (wtoken == token) {
++                                    break;
++                                }
++                                if (mFocusedApp == token) {
++                                    // Whoops, we are below the focused app...  no focus for you!
++                                    if (localLOGV || DEBUG_FOCUS_LIGHT) Slog.v(TAG,
++                                            "findFocusedWindow: Reached focused app=" + mFocusedApp);
++                                    return null;
++                                }
++                            }
++                            if (tokenNdx >= 0) {
++                                // Early exit from loop, must have found the matching token.
++                                break;
++                            }
++                         }
++                     }
++                } catch (RemoteException e) {
++                    continue;
+                 }
+             }
+ 
+@@ -10911,4 +11106,5 @@ public class WindowManagerService extends IWindowManager.Stub
+     public Object getWindowManagerLock() {
+         return mWindowMap;
+     }
++
+ }
+diff --git a/services/java/com/android/server/wm/WindowState.java b/services/java/com/android/server/wm/WindowState.java
+index 8347b87..42e822a 100644
+--- a/services/java/com/android/server/wm/WindowState.java
++++ b/services/java/com/android/server/wm/WindowState.java
+@@ -471,9 +471,9 @@ final class WindowState implements WindowManagerPolicy.WindowState {
+         } else {
+             mContainingFrame.set(pf);
+         }
+-
+-        mDisplayFrame.set(df);
+-
++//dingej1 2013,12,27 force DisplayFrame as StackBox because of app begin.
++        mDisplayFrame.set(mContainingFrame);
++//dingej1 end.
+         final int pw = mContainingFrame.width();
+         final int ph = mContainingFrame.height();
+ 
+@@ -541,7 +541,15 @@ final class WindowState implements WindowManagerPolicy.WindowState {
+             x = mAttrs.x;
+             y = mAttrs.y;
+         }
+-
++//dingej1 2013,12,27 format layout paramenter under stack box. begin.
++//dingej1 2014,1,9 begin. let full display window bypass.
++        if(stack != null && stack.hasSibling()){
++            x = x<0? 0: x;
++            y = y<0? 0: y;
++            w = w>pw ? pw : w;
++            h = h>ph ? ph : h;
++        }
++//dingej1 end.
+         Gravity.apply(mAttrs.gravity, w, h, mContainingFrame,
+                 (int) (x + mAttrs.horizontalMargin * pw),
+                 (int) (y + mAttrs.verticalMargin * ph), mFrame);
+@@ -550,6 +558,19 @@ final class WindowState implements WindowManagerPolicy.WindowState {
+ 
+         // Now make sure the window fits in the overall display.
+         Gravity.applyDisplay(mAttrs.gravity, df, mFrame);
++//dingej1 2013,12,27 format mFrame under stackbox and calculate scale again. begin.
++//dingej1 2014,1,9 begin. let full display window bypass.
++        if(stack != null && stack.hasSibling()){
++            mFrame.set(Math.max(mContainingFrame.left, mFrame.left),
++                Math.max(mContainingFrame.top, mFrame.top),
++                Math.min(mContainingFrame.right, mFrame.right),
++                Math.min(mContainingFrame.bottom, mFrame.bottom));
++            if ((mAttrs.flags & WindowManager.LayoutParams.FLAG_SCALED) != 0) {
++                mHScale = (mFrame.right - mFrame.left)/(float)mRequestedWidth;
++                mVScale = (mFrame.bottom - mFrame.top)/(float)mRequestedHeight;
++            }
++        }
++//dingej1 end.
+ 
+         // Make sure the content and visible frames are inside of the
+         // final window frame.
+@@ -713,7 +734,10 @@ final class WindowState implements WindowManagerPolicy.WindowState {
+     }
+ 
+     TaskStack getStack() {
+-        AppWindowToken wtoken = mAppToken == null ? mService.mFocusedApp : mAppToken;
++//dingej1 2014,1,2 begin. System Window should use HomeStack not Focus Stack.
++        //AppWindowToken wtoken = mAppToken == null ? mService.mFocusedApp : mAppToken;
++        AppWindowToken wtoken = mAppToken;
++//dingej1 end.
+         if (wtoken != null) {
+             Task task = mService.mTaskIdToTask.get(wtoken.groupId);
+             if (task != null) {

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/* apps/common/assets/default/default/skins/StatusBar.xml
+**
+** Copyright 2010, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
+    android:id="@+id/status_bar_recents_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#66000000">
+
+<!--1begin-->
+    <FrameLayout
+        android:id="@+id/recents_panel_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:paddingBottom="290dp"
+        android:paddingLeft="286dp"
+        android:paddingRight="286dp"
+        android:paddingTop="20dp"
+        android:visibility="invisible" >
+        <include
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        layout="@layout/lenovo_status_bar_recent_preview"/>
+<!--the true one end-->
+        <ImageView
+            android:id="@+id/sub_forbid_panel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="invisible"/>
+    </FrameLayout>
+<!--1end-->
+
+<!--2,3,4begin-->
+    <RelativeLayout
+        android:id="@+id/status_bar_recents_bottom"
+        android:layout_width="fill_parent"
+        android:layout_height="270dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/recent_bottom_bg"
+        android:orientation="vertical" >
+    <!--2begin-->
+        <LinearLayout
+            android:id="@+id/sub_recents_bottom_0"
+            android:layout_width="fill_parent"
+            android:layout_height="44dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="226dip"
+            android:orientation="horizontal" >
+
+    <!--Relative layout for prompt begin-->
+            <RelativeLayout
+                android:id="@+id/recents_panel_prompt"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent" >
+
+                <TextView
+                    android:id="@+id/prompt_sub_0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent ="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginTop="5dp"
+                    android:text="@string/prompt_info"
+                    android:textSize="24dp"
+                    android:textColor="#FFFFFF"/>
+                <RelativeLayout
+                    android:id="@+id/recents_panel_prompt"
+                    android:layout_width="56dp"
+                    android:layout_height="55dp"
+                    android:background="@drawable/switch_button_bg"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="20dp" >
+                    <ImageButton
+                        android:id="@+id/prompt_sub_1"
+                        android:layout_width="29dp"
+                        android:layout_height="23dp"
+                        android:layout_centerInParent ="true"
+                        android:background="@drawable/recent_button_bg"
+                        android:textColor="#FFFFFF"
+                        style="?android:attr/buttonBarButtonStyle"
+                        android:visibility="visible"
+                    />
+                </RelativeLayout>
+            </RelativeLayout>
+    <!--Relative layout for prompt end-->
+        </LinearLayout>
+    <!--2end-->
+
+    <!--3begin-->
+        <LinearLayout
+        android:id="@+id/sub_recents_bottom_1"
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="225dp"
+        android:background="@drawable/recent_line_bg" >
+        </LinearLayout>
+    <!--3end-->
+    <!--4begin-->
+
+        <LinearLayout
+        android:id="@+id/sub_recents_bottom_2"
+        android:layout_width="fill_parent"
+        android:layout_height="225dp"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal" >
+
+        <com.android.systemui.recent.RecentsPanelView
+            android:id="@+id/recents_root"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            systemui:recentItemLayout="@layout/status_bar_recent_item" >
+
+        <!--recents apps icon begin-->
+            <FrameLayout
+            android:id="@+id/recents_bg_protect"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:clipChildren="false"
+            android:clipToPadding="false" >
+
+            <com.android.systemui.recent.RecentsHorizontalScrollView
+                android:id="@+id/recents_container"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="right"
+                android:fadingEdge="horizontal"
+                android:fadingEdgeLength="@dimen/status_bar_recents_scroll_fading_edge_length"
+                android:scrollbars="none" >
+
+                <LinearLayout
+                android:id="@+id/recents_linear_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="left"
+                android:fitsSystemWindows="true"
+                android:layoutDirection="ltr"
+                android:orientation="horizontal" >
+                </LinearLayout>
+            </com.android.systemui.recent.RecentsHorizontalScrollView>
+
+            <!--no apps icon begin-->
+                <include
+                android:id="@+id/recents_no_apps"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                layout="@layout/status_bar_no_recent_apps"
+                android:visibility="invisible" />
+            <!--no apps icon begin-->
+
+            </FrameLayout>
+        <!--recents apps icon end-->
+
+        <!--all apps icon begin-->
+            <include
+            android:id="@+id/all_apps_launcher"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            layout="@layout/lenovo_status_bar_all_apps_launcher"
+            android:visibility="invisible" />
+        <!--all apps icon end-->
+
+        </com.android.systemui.recent.RecentsPanelView>
+        </LinearLayout>
+
+    <!--4end-->
+</RelativeLayout>
+<!--2,3,4end-->
+</RelativeLayout>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Begin, Lenovo-sw wangyq12 add 2013-11-05, add new string for Temperature feature-->
+    <string name="temperature_too_too_high">Warning! Battery temperature too high, your device will shut down.</string>
+    <string name="temperature_too_high">Charging paused battery temperature too high.</string>
+    <string name="temperature_too_low">Charging paused battery temperature too low.</string>
+    <string name="temperature_too_high_title">Temperature too high</string>
+    <string name="temperature_too_low_title">Temperature too low</string>
+
+    <!-- End, Lenovo-sw wangyq12 add 2013-11-05, add new string for Temperature feature-->
+    <string name="launch_testcenter" translatable="false">Please wait, launching Lenovo Test Center...</string>
+
+    <!-- smart side bar begin-->
+    <string name="video_name_default" translatable="false">No Video Name</string>
+    <string name="book_name_default_port" translatable="false">No Book Name</string>
+    <string name="video_decription_default" translatable="false">""1:40:30/2:23:34"</string>
+    <string name="app_name_default" translatable="false">Application Name</string>
+    <string name="pic_name_default">Photos</string>
+    <string name="pic_count" translatable="false">(<xliff:g id="count">%s</xliff:g>)</string>
+    <string name="book_name_default">Books</string>
+    <string name="book_count" translatable="false">(<xliff:g id="count">%s</xliff:g>)</string>
+    <string name="book_progress_default_port" translatable="false"><xliff:g id="chapter">%s</xliff:g>章，第<xliff:g id="page">%s</xliff:g>页</string>
+    <string name="book_count_port">Total <xliff:g id="count">%s</xliff:g> Books</string>
+    <string name="scene_title">"Sound &amp; Visual"</string>
+    <string name="scene_normal">Tilt Mode</string>
+    <string name="scene_video">Stand Mode</string>
+    <string name="scene_reader">Hold Mode</string>
+    <string name="scene_change_notification_video">Stand Mode On</string>
+    <string name="scene_change_notification_reader">Hold Mode On</string>
+    <string name="user_tip_message1">Slide from the outer edge of the screen to the center to bring up smart side bar</string>
+    <string name="user_tip_message2">You could enable/disable it in Settings menu</string>
+    <string name="user_tip_message3">Mode will be auto set upon screen rotated.</string>
+    <string name="book_title_port">Recently viewed eBook</string>
+    <!-- smart side bar end-->
+    <!-- BEGIN [BLADEFHD-41][wangyq12] Energy bay feature development -->
+    <string name="dlg_batterydistinguish_title">Warning</string>
+    <string name="dlg_energyBay_msg_supplying">Your PAD can be used to charge other devices, but the battery level will drop quickly. You can see the battery level in notification bar.</string>
+    <string name="dlg_energyBay_msg_nosupply">Charging other device stopped</string>
+    <string name="dlg_energyBay_msg_lowpower">Battery level too low. For normal use, we suggest unplugging the data cable to stop charging.</string>
+    <string name="dlg_energyBay_bcheck_warning">Don\'t warn next time</string>
+    <string name="energyBay_notificaton_content">Charging other device</string>
+    <string name="energyBay_open_usb_otg">Start charging other device</string>
+    <string name="remaining_battery_capacity">The battery power remains <xliff:g id="batterylevel">%d</xliff:g>%%</string>
+    <!-- END [BLADEFHD-41][wangyq12] Energy bay feature development -->
+
+    <!-- M: zhangsx10 BLADEFHD-591 show battery percentage @{ -->
+    <string name="battery_percentage" translatable="false"><xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g></string>
+    <!-- @} -->
+    <!-- [BLADEFHD-3099][zhangsx10] Add using original charger prompt -->
+    <string name="battery_low_charge_prompt">"Please use the original charger to ensure charging efficiency and prolonged use."</string>
+
+    <!-- Content description of the gps tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_gps">GPS <xliff:g id="state" example="Off">%s</xliff:g>.</string>
+    <!-- Content description of the screen off timeout tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_screen_off_timeout">Screen Off Timeout <xliff:g id="time" example="30 seconds">%s</xliff:g>.</string>
+    <string name="screen_off_timeout_30s_description">30 seconds</string>
+    <string name="screen_off_timeout_1m_description">1 minute</string>
+    <string name="screen_off_timeout_5m_description">5 minutes</string>
+    <!-- Content description of the audio profile tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_audio_profile">Audio Profile <xliff:g id="type" example="General">%s</xliff:g>.</string>
+    <string name="audio_profil_general_description">General</string>
+    <string name="audio_profil_silence_description">Silence</string>
+    <string name="audio_profil_meeting_description">Meeting</string>
+    <string name="audio_profile_vibration_description">Vibration</string>
+    <string name="audio_profil_outdoor_description">Outdoor</string>
+    <!-- Content description of the dolby tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_dolby">Dolby <xliff:g id="state" example="Off">%s</xliff:g>.</string>
+    <!-- Content description of the dolby tile in quick settings (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_quick_settings_mobile_data">Mobile Data <xliff:g id="state" example="Off">%s</xliff:g>.</string>
+    <!-- QuickSettings: GPS [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_gps_label">GPS</string>
+    <!-- QuickSettings: Screen Off Timeout [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_screen_off_timeout_label">Timeout</string>
+    <!-- QuickSettings: Audio Profile [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_audio_profile_label">Audio Profile</string>
+    <!-- QuickSettings: Dolby [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_dolby_label">Dolby</string>
+    <!-- QuickSettings: Mobile Data [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_mobile_data_label">Mobile Data</string>
+<!-- Begin,Lenovo-sw Tom_liming11 add 2013-12-17, add for SystemUI about MultiWindow -->
+    <string name="prompt_info">Drag upwards to create multi-windows</string>
+    <string name="guide_prompt_info3">Tap to bring up function button</string>
+    <string name="guide_prompt_info2">Drag downwards to clear task</string>
+    <string name="guide_prompt_info1">Press the button to get more options to generate multi-windows</string>
+    <string name="guide_prompt_info0">Drag upwards to turn on multi-window task processing function</string>   
+    <string name="warning_prompt_info">Multi-window not supported</string>
+    <string name="guide_close"> OK </string>
+<!-- End,Lenovo-sw Tom_liming11 add 2013-12-17, add for SystemUI about MultiWindow -->
+</resources>

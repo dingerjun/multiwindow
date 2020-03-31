@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:id="@+id/menu_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false" >
+
+        <com.android.systemui.splitbar.view.InOutRelativeLayout
+            android:id="@+id/close_buttons_wrapper"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_centerInParent="true"
+            android:clipChildren="false"
+            android:clipToPadding="false" >
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/button_view_first"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/close"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/button_view_second"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="10dp"
+                android:background="@drawable/close"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/button_view_third"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/close"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/button_view_forth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="10dp"
+                android:background="@drawable/close"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/button_view_Fifth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/close"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/button_view_sixth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:layout_margin="10dp"
+                android:background="@drawable/close"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/button_view_seventh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/close"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/button_view_eighth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_margin="10dp"
+                android:background="@drawable/close"
+                android:visibility="gone" />
+        </com.android.systemui.splitbar.view.InOutRelativeLayout>
+
+        <com.android.systemui.splitbar.view.InOutRelativeLayout
+            android:id="@+id/menu_wrapper"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_centerInParent="true"
+            android:clipChildren="false"
+            android:clipToPadding="false" >
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/menu_add_first"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/add"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/menu_add_second"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/add"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/menu_max_first"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/max_window"
+                android:visibility="gone" />
+
+            <com.android.systemui.splitbar.view.InOutImageButton
+                android:id="@+id/menu_max_second"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/max_window"
+                android:visibility="gone" />
+        </com.android.systemui.splitbar.view.InOutRelativeLayout>
+
+        <ImageView
+            android:id="@+id/split_point"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/resize" >
+        </ImageView>
+    </RelativeLayout>
+
+</LinearLayout>

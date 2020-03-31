@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layoutDirection="ltr"
+    android:background="@drawable/recent_orientation_usrguide_bg_0" >
+
+    <RelativeLayout
+        android:id="@+id/all"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+	<TextView
+		android:id="@+id/guide_prompt_sub_0"
+		android:layout_width="wrap_content"
+		android:layout_height="match_parent"
+		android:layout_marginTop="440dp"
+		android:layout_marginLeft="480dp"
+		android:text="@string/guide_prompt_info0"
+		android:textSize="30dp"
+		android:textColor="#FFFFFF"/>
+	<TextView
+		android:id="@+id/guide_prompt_sub_1"
+		android:layout_width="wrap_content"
+		android:layout_height="match_parent"
+		android:layout_marginTop="620dp"
+		android:layout_marginLeft="620dp"
+		android:text="@string/guide_prompt_info2"
+		android:textSize="30dp"
+		android:textColor="#FFFFFF"/>
+    </RelativeLayout>
+
+</LinearLayout>

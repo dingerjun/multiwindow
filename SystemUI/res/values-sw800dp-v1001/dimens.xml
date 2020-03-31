@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="qs_tile_icon_size">72px</dimen>
+    <dimen name="quick_settings_cell_gap">0dp</dimen>
+    <dimen name="quick_settings_cell_height">126.67dp</dimen>
+    <dimen name="notification_panel_width">480dp</dimen>
+    <dimen name="notification_divider_height">0dp</dimen>
+    <dimen name="notification_row_min_height">60dp</dimen>
+    <dimen name="notification_min_height">70dp</dimen>
+    <dimen name="status_bar_icon_drawing_size">20dip</dimen>
+    <item type="dimen" name="status_bar_icon_drawing_alpha">100%</item>
+</resources>
